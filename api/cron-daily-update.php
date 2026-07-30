@@ -42,5 +42,15 @@ if (empty($onlyIds)) {
     }, 50, $onlyIds);
 }
 
+// Cesty k obrazkom v cache/products.json sa pocitaju v case parsovania (pred
+// importom fotiek vyssie), takze novo stiahnute fotky by sa v cache prejavili
+// az pri dalsom obnoveni. Preto tu cache este raz obnovime, aby web hned
+// ukazoval aj prave stiahnute fotky.
+if (($imgStats['saved'] ?? 0) > 0) {
+    logLine('Obnovujem cache este raz, aby sa prejavili novo stiahnute fotky...');
+    $api->clearCache();
+    $api->getProducts();
+}
+
 $elapsed = round(microtime(true) - $start);
 logLine("Hotovo za {$elapsed}s. Nove fotky: {$imgStats['saved']}, chyby: {$imgStats['errors']}.");
