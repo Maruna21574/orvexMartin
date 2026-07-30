@@ -1,0 +1,11 @@
+# Citlive udaje - config.php obsahuje prihlasovacie udaje k MRP systemu
+config.php
+
+# Generovana/cache data - vytvara sa automaticky pri behu (MrpApi.php)
+cache/*.json
+assets/img/produkty/*
+!assets/img/produkty/.gitkeep
+
+# OS / editor
+.DS_Store
+Thumbs.db

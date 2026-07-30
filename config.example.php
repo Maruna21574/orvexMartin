@@ -1,0 +1,66 @@
+<?php
+/**
+ * ORVEX MT s.r.o. - Konfigurácia aplikácie (VZOR)
+ *
+ * Skopíruj tento súbor ako config.php a doplň reálne hodnoty.
+ * config.php sa NEVERZUJE (je v .gitignore), pretože obsahuje citlivé
+ * prístupové údaje k MRP systému.
+ */
+
+// MRP-K/S API konfigurácia
+define('MRP_API_URL', 'http://xxx.xxx.xxx.xxx:8081');
+define('MRP_API_LOGIN', '');
+define('MRP_API_PASSWORD', '');
+define('MRP_API_KEY', '');
+define('MRP_AES_KEY', '');
+define('MRP_HMAC_KEY', '');
+define('MRP_AES_IV_LENGTH', 16);
+define('MRP_COMPANY_ID', '');
+
+// Databáza (voliteľné - pre cache)
+define('DB_HOST', 'localhost');
+define('DB_NAME', 'orvex_eshop');
+define('DB_USER', 'root');
+define('DB_PASS', '');
+
+// Aplikácia
+define('SITE_NAME', 'ORVEX Martin');
+define('SITE_URL', 'https://orvex.sk');
+define('COMPANY_NAME', 'ORVEX MT spol. s r.o.');
+define('COMPANY_ADDRESS', 'Školská ulica 233/5');
+define('COMPANY_CITY', 'Bystrička');
+define('COMPANY_ZIP', '038 04');
+define('COMPANY_PHONE', '+421 43 413 59 68');
+define('COMPANY_EMAIL', 'orvex@orvex.sk');
+define('COMPANY_ICO', '44596979');
+define('COMPANY_DIC', '2022749168');
+define('COMPANY_IC_DPH', 'SK2022749168');
+
+// Adresa, na ktorú chodia notifikácie o nových objednávkach
+define('ADMIN_NOTIFY_EMAIL', 'admin@example.com');
+
+// Nastavenia
+define('PRODUCTS_PER_PAGE', 12);
+define('CURRENCY', '€');
+define('CURRENCY_CODE', 'EUR');
+
+// Cesty
+define('ROOT_PATH', __DIR__);
+define('INCLUDES_PATH', ROOT_PATH . '/includes');
+define('API_PATH', ROOT_PATH . '/api');
+define('ASSETS_PATH', ROOT_PATH . '/assets');
+
+// Debug mód
+define('DEBUG_MODE', false);
+
+// MRP API
+define('MRP_API_ENABLED', true);
+
+// Session
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Autoload
+require_once INCLUDES_PATH . '/functions.php';
+require_once INCLUDES_PATH . '/mailer.php';

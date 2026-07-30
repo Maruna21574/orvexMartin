@@ -1,0 +1,66 @@
+RewriteEngine On
+RewriteBase /
+
+# Force HTTPS (uncomment in production)
+# RewriteCond %{HTTPS} off
+# RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Remove trailing slashes
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)/$ /$1 [L,R=301]
+
+# Cistes URL bez pripony .php (napr. /produkty namiesto /produkty.php) -
+# interne sa dorata .php a obsluzi sa dany subor, v adresnom riadku zostava
+# cista URL. $_SERVER['SCRIPT_NAME'] zostava povodny .php nazov, takze
+# isActivePage() vo functions.php funguje bez zmeny.
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}\.php -f
+RewriteRule ^(.*)$ $1.php [L]
+
+# Serve existing files and directories
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Route to index.php if no file matches
+RewriteRule ^$ /index.php [L]
+
+# Custom 404 page
+ErrorDocument 404 /404.php
+
+# Security - deny access to sensitive files
+<FilesMatch "\.(php|ini|log|sh|sql)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+</FilesMatch>
+
+# Allow PHP files in root and api directory
+<FilesMatch "^(index|produkty|produkt|kosik|objednavka|kontakt|o-nas|obchodne-podmienky|reklamacny-poriadok|ochrana-osobnych-udajov|404|ajax)\.php$">
+    <IfModule mod_authz_core.c>
+        Require all granted
+    </IfModule>
+</FilesMatch>
+
+# Disable directory listing
+Options -Indexes
+
+# Set UTF-8 encoding
+AddDefaultCharset UTF-8
+
+# Cache static assets
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/webp "access plus 1 month"
+    ExpiresByType image/svg+xml "access plus 1 month"
+</IfModule>
+
+# GZIP compression
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json image/svg+xml
+</IfModule>
