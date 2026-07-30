@@ -57,6 +57,14 @@ $stats = $api->importAllImages(function (array $stats, ?string $error) use ($sta
     @flush();
 }, 50, $onlyIds, $maxBatches);
 
+// Bez tohto by sa novo stiahnute fotky prejavili na webe az pri dalsom behu
+// (cache sa pocitala este pred stiahnutim vyssie).
+if ($stats['saved'] > 0) {
+    echo "Obnovujem cache, aby sa novo stiahnute fotky hned prejavili...\n";
+    $api->clearCache();
+    $api->getProducts();
+}
+
 $elapsed = round(microtime(true) - $start);
 echo "\nHotovo za {$elapsed}s.\n";
 echo "Davky: {$stats['batches']}, ulozene nove obrazky: {$stats['saved']}, preskocene (uz existovali/bez obrazku): {$stats['skipped']}, chyby: {$stats['errors']}\n";
