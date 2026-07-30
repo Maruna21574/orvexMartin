@@ -20,6 +20,10 @@ $api = new MrpApi();
 
 $onlyIds = null;
 if ($onlyMissing) {
+    // Cache sa musi obnovit, inak by "chybajuce" vzdy zahrnalo aj uz davno
+    // stiahnute fotky z predchadzajuceho (mozno prerusenehho) behu - opakovane
+    // spustanie by tak nikdy nepostupilo dalej.
+    $api->clearCache();
     $onlyIds = array_column(array_filter($api->getProducts(), fn($p) => empty($p['image'])), 'id');
     echo "Iba chybajuce fotky: " . count($onlyIds) . " produktov.\n";
 }

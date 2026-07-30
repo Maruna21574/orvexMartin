@@ -5,8 +5,15 @@
 //    minulej noci, prip. zvysky po predoslom neuplnom behu).
 //
 // Spustenie: php api/cron-daily-update.php
-// NEVOLAT cez URL/prehliadac - beh moze trvat desiatky minut (najma import
-// fotiek), co presiahne bezne casove limity pre webove requesty.
+// NEVOLAT cez URL/prehliadac - beh moze trvat aj niekolko minut.
+//
+// Davky su umyselne male a obmedzene poctom (BATCH_SIZE / MAX_BATCHES) -
+// niektore shared hostingy zabijaju dlho bezice CLI procesy (u nas cca po
+// 3 minutach, aj na pozadi/nohup). Bezny nocny beh (par novych produktov)
+// sa do limitu pohodlne zmesti; velky jednorazovy dohlad pri prvom nasadeni
+// treba spustit opakovane (viackrat po sebe, viz README/dokumentacia).
+const BATCH_SIZE = 25;
+const MAX_BATCHES = 3;
 
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/MrpApi.php';
@@ -39,7 +46,7 @@ if (empty($onlyIds)) {
             $line .= ' | ' . $error;
         }
         logLine($line);
-    }, 50, $onlyIds);
+    }, BATCH_SIZE, $onlyIds, MAX_BATCHES);
 }
 
 // Cesty k obrazkom v cache/products.json sa pocitaju v case parsovania (pred
