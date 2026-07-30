@@ -22,7 +22,25 @@ class MrpApi
     public function getProducts(array $filters = []): array
     {
         if ($this->cachedProducts === null) {
-            $this->cachedProducts = $this->loadFromCache() ?? $this->fetchAndCache();
+            $fresh = $this->loadFromCache();
+            if ($fresh !== null) {
+                $this->cachedProducts = $fresh;
+            } else {
+                try {
+                    $this->cachedProducts = $this->fetchAndCache();
+                } catch (\Throwable $e) {
+                    // MRP nedostupne a cache je bud prazdna, alebo starsia nez
+                    // CACHE_TTL. Radsej pouzijeme akekolvek (aj stare) realne
+                    // data z MRP, nez aby volajuci (functions.php) spadol na
+                    // natvrdo napisane demo produkty - tie sa maju zobrazit
+                    // len ak naozaj nikdy nebola uspesne stiahnuta ziadna cache.
+                    $stale = $this->loadFromCacheIgnoringTtl();
+                    if ($stale === null) {
+                        throw $e;
+                    }
+                    $this->cachedProducts = $stale;
+                }
+            }
         }
 
         return $this->applyFilters($this->cachedProducts, $filters);
@@ -75,6 +93,14 @@ class MrpApi
             return null;
         }
         if (time() - filemtime(self::CACHE_FILE) > self::CACHE_TTL) {
+            return null;
+        }
+        return $this->loadFromCacheIgnoringTtl();
+    }
+
+    private function loadFromCacheIgnoringTtl(): ?array
+    {
+        if (!file_exists(self::CACHE_FILE)) {
             return null;
         }
         $data = json_decode(file_get_contents(self::CACHE_FILE), true);
