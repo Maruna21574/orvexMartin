@@ -20,11 +20,17 @@ $api = new MrpApi();
 
 $onlyIds = null;
 if ($onlyMissing) {
-    // Cache sa musi obnovit, inak by "chybajuce" vzdy zahrnalo aj uz davno
-    // stiahnute fotky z predchadzajuceho (mozno prerusenehho) behu - opakovane
-    // spustanie by tak nikdy nepostupilo dalej.
-    $api->clearCache();
-    $missingIds = array_column(array_filter($api->getProducts(), fn($p) => empty($p['image'])), 'id');
+    // Skusime vynutit cerstve data (inak by "chybajuce" vzdy zahrnalo aj uz
+    // davno stiahnute fotky z predchadzajuceho behu). Ak MRP prave nie je
+    // dostupne, POUZIJEME EXISTUJUCU CACHE namiesto jej zmazania - inak by
+    // web pri navsteve pocas tejto chvile spadol na demo data (uz sa raz stalo).
+    try {
+        $products = $api->refreshProducts();
+    } catch (\Throwable $e) {
+        echo "MRP nedostupne (" . $e->getMessage() . "), pouzivam existujucu cache.\n";
+        $products = $api->getProducts();
+    }
+    $missingIds = array_column(array_filter($products, fn($p) => empty($p['image'])), 'id');
 
     // Karty, o ktorych uz vieme, ze v MRP nemaju fotku, vynechame - inak by
     // kazdy beh cast rozpoctu davok mrhal na ich opatovne overovanie.
@@ -61,8 +67,11 @@ $stats = $api->importAllImages(function (array $stats, ?string $error) use ($sta
 // (cache sa pocitala este pred stiahnutim vyssie).
 if ($stats['saved'] > 0) {
     echo "Obnovujem cache, aby sa novo stiahnute fotky hned prejavili...\n";
-    $api->clearCache();
-    $api->getProducts();
+    try {
+        $api->refreshProducts();
+    } catch (\Throwable $e) {
+        echo "MRP nedostupne (" . $e->getMessage() . "), cache ostava zatial povodna.\n";
+    }
 }
 
 $elapsed = round(microtime(true) - $start);

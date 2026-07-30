@@ -29,8 +29,15 @@ $start = microtime(true);
 $api = new MrpApi();
 
 logLine('Obnovujem produktovu cache...');
-$api->clearCache();
-$products = $api->getProducts();
+// refreshProducts() nemaze stary cache pred pokusom o novy - ak je MRP prave
+// nedostupne, web ostane fungovat na poslednych platnych datach namiesto
+// toho, aby pri dalsej navsteve spadol na demo data.
+try {
+    $products = $api->refreshProducts();
+} catch (\Throwable $e) {
+    logLine('MRP nedostupne (' . $e->getMessage() . '), pouzivam existujucu cache.');
+    $products = $api->getProducts();
+}
 logLine('Nacitanych produktov: ' . count($products));
 
 $missingIds = array_column(array_filter($products, fn($p) => empty($p['image'])), 'id');
@@ -57,8 +64,11 @@ if (empty($onlyIds)) {
 // ukazoval aj prave stiahnute fotky.
 if (($imgStats['saved'] ?? 0) > 0) {
     logLine('Obnovujem cache este raz, aby sa prejavili novo stiahnute fotky...');
-    $api->clearCache();
-    $api->getProducts();
+    try {
+        $api->refreshProducts();
+    } catch (\Throwable $e) {
+        logLine('MRP nedostupne (' . $e->getMessage() . '), cache ostava zatial povodna.');
+    }
 }
 
 $elapsed = round(microtime(true) - $start);

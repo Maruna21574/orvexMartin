@@ -37,6 +37,19 @@ class MrpApi
     }
 
     /**
+     * Vynuti nove stiahnutie z MRP (na rozdiel od clearCache()+getProducts()
+     * NEMAZE najprv stary cache subor). Ak MRP zlyha, povodne platne data
+     * ostanu nedotknute - web tak nikdy nezostane bez dat len preto, ze sa
+     * nepodaril pokus o obnovenie (cron beziaci kazdych 15 min by inak mohol
+     * kedykoli "vynulovat" cache presne vo chvili, ked je MRP docasne dole).
+     */
+    public function refreshProducts(): array
+    {
+        $this->cachedProducts = null;
+        return $this->fetchAndCache();
+    }
+
+    /**
      * Vrati zoznam cisel kariet, o ktorych uz vieme (z predchadzajucich behov
      * importAllImages), ze v MRP nemaju ziadnu fotku - netreba ich znova pytat.
      */
