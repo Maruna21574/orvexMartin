@@ -33,13 +33,15 @@ $api->clearCache();
 $products = $api->getProducts();
 logLine('Nacitanych produktov: ' . count($products));
 
-$onlyIds = array_column(array_filter($products, fn($p) => empty($p['image'])), 'id');
+$missingIds = array_column(array_filter($products, fn($p) => empty($p['image'])), 'id');
+$noImage = array_flip($api->getNoImageIds());
+$onlyIds = array_values(array_filter($missingIds, fn($id) => !isset($noImage[$id])));
 
 if (empty($onlyIds)) {
-    logLine('Vsetky produkty uz maju fotku, import fotiek sa preskakuje.');
+    logLine('Vsetky produkty uz maju fotku (alebo ju MRP pre ne nema). Import fotiek sa preskakuje.');
     $imgStats = ['saved' => 0, 'errors' => 0];
 } else {
-    logLine('Chybajucich fotiek: ' . count($onlyIds) . '. Startujem doplnenie...');
+    logLine('Chybajucich fotiek: ' . count($missingIds) . ', z toho este neoverenych: ' . count($onlyIds) . '. Startujem doplnenie...');
     $imgStats = $api->importAllImages(function (array $stats, ?string $error) {
         $line = "davka {$stats['done']}/{$stats['batches']} - ulozene: {$stats['saved']}, preskocene: {$stats['skipped']}, chyby: {$stats['errors']}";
         if ($error) {

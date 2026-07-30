@@ -4,6 +4,7 @@ class MrpApi
 {
     private const CACHE_FILE = ROOT_PATH . '/cache/products.json';
     private const CACHE_TTL  = 86400; // 24 hodin - data sa aktualizuju raz denne cez nocny cron
+    private const NO_IMAGE_FILE = ROOT_PATH . '/cache/no-image-ids.json';
 
     private string $apiUrl;
     private string $encKey;
@@ -33,6 +34,26 @@ class MrpApi
         if (file_exists(self::CACHE_FILE)) {
             unlink(self::CACHE_FILE);
         }
+    }
+
+    /**
+     * Vrati zoznam cisel kariet, o ktorych uz vieme (z predchadzajucich behov
+     * importAllImages), ze v MRP nemaju ziadnu fotku - netreba ich znova pytat.
+     */
+    public function getNoImageIds(): array
+    {
+        if (!file_exists(self::NO_IMAGE_FILE)) {
+            return [];
+        }
+        $ids = json_decode(file_get_contents(self::NO_IMAGE_FILE), true);
+        return is_array($ids) ? $ids : [];
+    }
+
+    private function rememberNoImageIds(array $newIds): void
+    {
+        $existing = $this->getNoImageIds();
+        $merged = array_values(array_unique(array_merge($existing, $newIds)));
+        file_put_contents(self::NO_IMAGE_FILE, json_encode($merged));
     }
 
     private function loadFromCache(): ?array
@@ -115,6 +136,7 @@ class MrpApi
         }
 
         $stats = ['batches' => count($batches), 'done' => 0, 'saved' => 0, 'skipped' => 0, 'errors' => 0];
+        $confirmedNoImage = [];
 
         foreach ($batches as $batch) {
             try {
@@ -131,6 +153,10 @@ class MrpApi
 
                         if ($velobr === '' || $velobraz === '') {
                             $stats['skipped']++;
+                            // MRP pre tuto kartu nema ziadnu fotku - zapamatame si to trvalo,
+                            // aby ju dalsie behy uz znova neoverovali (bez toho by kazdy beh
+                            // strácal cast svojho maleho casoveho rozpoctu na tie iste "prazdne" karty).
+                            $confirmedNoImage[] = (string)$f->cislo;
                             continue;
                         }
 
@@ -157,6 +183,14 @@ class MrpApi
             $stats['done']++;
             if ($onProgress) {
                 $onProgress($stats, null);
+            }
+
+            // Uklada sa po kazdej davke (nie az na konci) - proces moze byt
+            // predcasne ukonceny (napr. limitom hostingu na dlho bezice CLI
+            // procesy), a nechceme prist o uz zistene "bez fotky" karty.
+            if (!empty($confirmedNoImage)) {
+                $this->rememberNoImageIds($confirmedNoImage);
+                $confirmedNoImage = [];
             }
         }
 
