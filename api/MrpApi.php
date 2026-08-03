@@ -6,6 +6,26 @@ class MrpApi
     private const CACHE_TTL  = 86400; // 24 hodin - data sa aktualizuju raz denne cez nocny cron
     private const NO_IMAGE_FILE = ROOT_PATH . '/cache/no-image-ids.json';
 
+    // MRP neposiela ziadnu skutocnu kategoriu produktu - pole "skupina" je v
+    // skutocnosti dodavatel/vyrobca (Marko, Rys, Konsignat...), nie kategoria
+    // pre e-shop. Kategoria sa preto odvodzuje z nazvu karty podla typu dielu.
+    // Poradie je dolezite - prvy zhodny riadok vyhrava, konkretnejsie kluc.
+    // slova musia byt pred vseobecnejsimi.
+    private const CATEGORY_RULES = [
+        'Ložiská'                    => ['lozisko', 'loziska'],
+        'Filtre'                     => ['filter', 'filer', 'filtr'],
+        'Brzdy'                      => ['brzd', 'lamela'],
+        'Hydraulika a ventily'       => ['hydrog', 'ventil', 'cerpadlo', 'piest', 'valec'],
+        'Elektrika'                  => ['alternator', 'spinac', 'prepinac', 'cievka', 'motorcek', 'regulator', '24v'],
+        'Hriadele, čapy a prevody'   => ['hriadel', 'koleso', 'naboj', 'pastorok', 'kardan', 'poloos', 'spojka', 'unasac', 'prevod', 'cap', 'paka', 'tiahlo', 'vidlica', 'pero', 'remenica', 'sukolie'],
+        'Tesnenia a krúžky'          => ['tesnenie', 'gufero', 'semering', 'manzeta', 'kruzok', 'poist', 'prilozka'],
+        'Skrutky, matice a podložky' => ['skrutka', 'matica', 'podlozka', 'kolik'],
+        'Pružiny'                    => ['pruzina'],
+        'Hadice, rúrky a spojky'     => ['hadica', 'had.', 'spona', 'pripojka', 'objimka', 'hrdlo', 'rurka', 'rura', 'potrubie', 'priruba'],
+        'Kryty, veká a puzdrá'       => ['kryt', 'veko', 'puzdro', 'skrina', 'teleso', 'zatka'],
+    ];
+    private const DEFAULT_CATEGORY = 'Ostatné';
+
     private string $apiUrl;
     private string $encKey;
     private string $authKey;
@@ -143,9 +163,15 @@ class MrpApi
                     'name'      => $product['category'],
                     'parent_id' => '',
                     'count'     => 0,
+                    'image'     => '',
                 ];
             }
             $categories[$id]['count']++;
+            // Ako reprezentativny obrazok kategorie sa berie obrazok prveho
+            // produktu v nej, ktory nejaky ma (vela kariet z MRP fotku nema).
+            if ($categories[$id]['image'] === '' && !empty($product['image'])) {
+                $categories[$id]['image'] = $product['image'];
+            }
         }
         return array_values($categories);
     }
@@ -378,11 +404,8 @@ class MrpApi
                 continue;
             }
 
-            $skupina   = trim((string)$f->skupina);
-            $categoryId = $skupina
-                ? strtolower(preg_replace('/[^a-zA-Z0-9]+/', '-', $skupina))
-                : '';
-            $categoryName = (string)$f->skupnazev ?: $skupina;
+            $categoryName = $this->resolveCategory((string)$f->nazev);
+            $categoryId   = $this->slugify($categoryName);
 
             $malobr = trim((string)$f->malobr);
             $velobr = trim((string)$f->velobr);
@@ -410,7 +433,7 @@ class MrpApi
                 'price'       => (float)$f->cena,
                 'price_vat'   => (float)$f->cenasdph,
                 'vat_rate'    => (float)$f->sazbadph,
-                'sku'         => (string)$f->kod,
+                'sku'         => (string)$f->kod1,
                 'category'    => $categoryName,
                 'category_id' => $categoryId,
                 'stock'       => (int)$f->pocetmj,
@@ -422,6 +445,33 @@ class MrpApi
         }
 
         return $products;
+    }
+
+    private function slugify(string $text): string
+    {
+        $transliterated = strtr($text, [
+            'á' => 'a', 'ä' => 'a', 'č' => 'c', 'ď' => 'd', 'é' => 'e', 'í' => 'i',
+            'ľ' => 'l', 'ĺ' => 'l', 'ň' => 'n', 'ó' => 'o', 'ô' => 'o', 'ŕ' => 'r',
+            'š' => 's', 'ť' => 't', 'ú' => 'u', 'ý' => 'y', 'ž' => 'z',
+            'Á' => 'A', 'Ä' => 'A', 'Č' => 'C', 'Ď' => 'D', 'É' => 'E', 'Í' => 'I',
+            'Ľ' => 'L', 'Ĺ' => 'L', 'Ň' => 'N', 'Ó' => 'O', 'Ô' => 'O', 'Ŕ' => 'R',
+            'Š' => 'S', 'Ť' => 'T', 'Ú' => 'U', 'Ý' => 'Y', 'Ž' => 'Z',
+        ]);
+
+        return trim(strtolower(preg_replace('/[^a-zA-Z0-9]+/', '-', $transliterated)), '-');
+    }
+
+    private function resolveCategory(string $productName): string
+    {
+        $name = mb_strtolower($productName, 'UTF-8');
+        foreach (self::CATEGORY_RULES as $category => $keywords) {
+            foreach ($keywords as $keyword) {
+                if (str_contains($name, $keyword)) {
+                    return $category;
+                }
+            }
+        }
+        return self::DEFAULT_CATEGORY;
     }
 
     private function resolveImagePath(string $name): string

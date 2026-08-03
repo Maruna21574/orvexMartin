@@ -44,11 +44,17 @@ $featuredProducts = array_slice(getProducts(), 0, 4);
             ];
             foreach ($categories as $cat): ?>
                 <a href="/produkty?kategoria=<?= e($cat['id']) ?>" class="category-card">
-                    <div class="category-card__icon">
-                        <?= $icons[$cat['id']] ?? $icons['nahradne-diely'] ?>
+                    <div class="category-card__image">
+                        <?php if (!empty($cat['image'])): ?>
+                            <img src="<?= e($cat['image']) ?>" alt="<?= e($cat['name']) ?>" loading="lazy">
+                        <?php else: ?>
+                            <?= $icons[$cat['id']] ?? $icons['nahradne-diely'] ?>
+                        <?php endif; ?>
                     </div>
-                    <h3><?= e($cat['name']) ?></h3>
-                    <span class="category-card__count"><?= $cat['count'] ?> produktov</span>
+                    <div class="category-card__body">
+                        <h3><?= e($cat['name']) ?></h3>
+                        <span class="category-card__count"><?= $cat['count'] ?> produktov</span>
+                    </div>
                 </a>
             <?php endforeach; ?>
         </div>

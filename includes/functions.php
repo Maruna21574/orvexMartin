@@ -282,11 +282,11 @@ function getDemoProducts(): array
 function getDemoCategories(): array
 {
     return [
-        ['id' => 'lesna-technika', 'name' => 'Lesná technika', 'parent_id' => '', 'count' => 2],
-        ['id' => 'hydraulicke-cerpadla', 'name' => 'Hydraulické čerpadlá', 'parent_id' => '', 'count' => 2],
-        ['id' => 'snehove-retaze', 'name' => 'Snehové reťaze', 'parent_id' => '', 'count' => 2],
-        ['id' => 'lanove-uvazky', 'name' => 'Lanové úväzky', 'parent_id' => '', 'count' => 2],
-        ['id' => 'nahradne-diely', 'name' => 'Náhradné diely', 'parent_id' => '', 'count' => 1],
+        ['id' => 'lesna-technika', 'name' => 'Lesná technika', 'parent_id' => '', 'count' => 2, 'image' => ''],
+        ['id' => 'hydraulicke-cerpadla', 'name' => 'Hydraulické čerpadlá', 'parent_id' => '', 'count' => 2, 'image' => ''],
+        ['id' => 'snehove-retaze', 'name' => 'Snehové reťaze', 'parent_id' => '', 'count' => 2, 'image' => ''],
+        ['id' => 'lanove-uvazky', 'name' => 'Lanové úväzky', 'parent_id' => '', 'count' => 2, 'image' => ''],
+        ['id' => 'nahradne-diely', 'name' => 'Náhradné diely', 'parent_id' => '', 'count' => 1, 'image' => ''],
     ];
 }
 
