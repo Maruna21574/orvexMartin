@@ -17,6 +17,10 @@ define('MRP_HMAC_KEY', '');
 define('MRP_AES_IV_LENGTH', 16);
 define('MRP_COMPANY_ID', '');
 
+// Tajny token na spustenie udrzbovych skriptov cez URL (api/cron-run.php) -
+// vygeneruj vlastnu nahodnu hodnotu, napr.: php -r "echo bin2hex(random_bytes(24));"
+define('CRON_SECRET', '');
+
 // Databáza (voliteľné - pre cache)
 define('DB_HOST', 'localhost');
 define('DB_NAME', 'orvex_eshop');

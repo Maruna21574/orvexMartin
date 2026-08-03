@@ -43,6 +43,14 @@ ErrorDocument 404 /404.php
     </IfModule>
 </FilesMatch>
 
+# cron-run.php je chraneny vlastnym tajnym tokenom (CRON_SECRET) v kode,
+# preto je bezpecne ho povolit aj cez URL - pozri api/cron-run.php.
+<FilesMatch "^cron-run\.php$">
+    <IfModule mod_authz_core.c>
+        Require all granted
+    </IfModule>
+</FilesMatch>
+
 # Disable directory listing
 Options -Indexes
 
