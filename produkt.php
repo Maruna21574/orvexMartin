@@ -146,15 +146,6 @@ require_once 'includes/header.php';
                 </div>
             </div>
         </div>
-
-        <?php if (!empty($product['description'])): ?>
-            <div class="product-description">
-                <h2>Popis produktu</h2>
-                <div class="product-description__content">
-                    <?= nl2br(e($product['description'])) ?>
-                </div>
-            </div>
-        <?php endif; ?>
     </div>
 </section>
 
