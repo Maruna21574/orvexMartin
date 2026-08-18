@@ -65,9 +65,13 @@ require_once 'includes/header.php';
                 <p class="product-detail__sku">Kód produktu: <strong><?= e($product['sku']) ?></strong></p>
 
                 <div class="product-detail__price-box">
-                    <span class="product-detail__price"><?= formatPrice($product['price_vat']) ?></span>
-                    <span class="product-detail__price-net">bez DPH: <?= formatPrice($product['price']) ?></span>
-                    <span class="product-detail__vat">DPH <?= $product['vat_rate'] ?>%</span>
+                    <?php if ($product['stock'] > 0): ?>
+                        <span class="product-detail__price"><?= formatPrice($product['price_vat']) ?></span>
+                        <span class="product-detail__price-net">bez DPH: <?= formatPrice($product['price']) ?></span>
+                        <span class="product-detail__vat">DPH <?= $product['vat_rate'] ?>%</span>
+                    <?php else: ?>
+                        <span class="product-detail__price">Cena na vyžiadanie</span>
+                    <?php endif; ?>
                 </div>
 
                 <div class="product-detail__stock <?= $product['stock'] > 0 ? 'product-detail__stock--in' : 'product-detail__stock--out' ?>">
@@ -81,21 +85,28 @@ require_once 'includes/header.php';
                 </div>
 
                 <div class="product-detail__actions">
-                    <div class="quantity-input">
-                        <button class="quantity-input__btn" data-action="decrease" aria-label="Znížiť množstvo">-</button>
-                        <input type="number" id="productQty" value="1" min="1" max="<?= $product['stock'] ?: 999 ?>">
-                        <button class="quantity-input__btn" data-action="increase" aria-label="Zvýšiť množstvo">+</button>
-                    </div>
-                    <button class="btn btn--primary btn--lg btn--add-to-cart"
-                            data-id="<?= e($product['id']) ?>"
-                            data-name="<?= e($product['name']) ?>"
-                            data-price="<?= $product['price_vat'] ?>"
-                            data-image="<?= e($product['image']) ?>"
-                            data-sku="<?= e($product['sku']) ?>"
-                            data-qty-input="productQty">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-                        Pridať do košíka
-                    </button>
+                    <?php if ($product['stock'] > 0): ?>
+                        <div class="quantity-input">
+                            <button class="quantity-input__btn" data-action="decrease" aria-label="Znížiť množstvo">-</button>
+                            <input type="number" id="productQty" value="1" min="1" max="<?= $product['stock'] ?: 999 ?>">
+                            <button class="quantity-input__btn" data-action="increase" aria-label="Zvýšiť množstvo">+</button>
+                        </div>
+                        <button class="btn btn--primary btn--lg btn--add-to-cart"
+                                data-id="<?= e($product['id']) ?>"
+                                data-name="<?= e($product['name']) ?>"
+                                data-price="<?= $product['price_vat'] ?>"
+                                data-image="<?= e($product['image']) ?>"
+                                data-sku="<?= e($product['sku']) ?>"
+                                data-qty-input="productQty">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                            Pridať do košíka
+                        </button>
+                    <?php else: ?>
+                        <a href="#dopyt" class="btn btn--primary btn--lg">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                            Vyžiadať cenu a dostupnosť
+                        </a>
+                    <?php endif; ?>
                 </div>
 
                 <div class="product-detail__trust">
@@ -183,18 +194,25 @@ $relatedProducts = array_slice(array_values($relatedProducts), 0, 4);
                         <p class="product-card__sku">Kód: <?= e($rp['sku']) ?></p>
                     </div>
                     <div class="product-card__footer">
-                        <div class="product-card__price">
-                            <span class="product-card__price-vat"><?= formatPrice($rp['price_vat']) ?></span>
-                            <span class="product-card__price-net">bez DPH: <?= formatPrice($rp['price']) ?></span>
-                        </div>
-                        <button class="btn btn--primary btn--sm btn--add-to-cart"
-                                data-id="<?= e($rp['id']) ?>"
-                                data-name="<?= e($rp['name']) ?>"
-                                data-price="<?= $rp['price_vat'] ?>"
-                                data-image="<?= e($rp['image']) ?>"
-                                data-sku="<?= e($rp['sku']) ?>">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-                        </button>
+                        <?php if ($rp['stock'] > 0): ?>
+                            <div class="product-card__price">
+                                <span class="product-card__price-vat"><?= formatPrice($rp['price_vat']) ?></span>
+                                <span class="product-card__price-net">bez DPH: <?= formatPrice($rp['price']) ?></span>
+                            </div>
+                            <button class="btn btn--primary btn--sm btn--add-to-cart"
+                                    data-id="<?= e($rp['id']) ?>"
+                                    data-name="<?= e($rp['name']) ?>"
+                                    data-price="<?= $rp['price_vat'] ?>"
+                                    data-image="<?= e($rp['image']) ?>"
+                                    data-sku="<?= e($rp['sku']) ?>">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                            </button>
+                        <?php else: ?>
+                            <div class="product-card__price">
+                                <span class="product-card__price-vat">Cena na vyžiadanie</span>
+                            </div>
+                            <a href="/produkt?id=<?= e($rp['id']) ?>#dopyt" class="btn btn--outline btn--sm">Vyžiadať cenu</a>
+                        <?php endif; ?>
                     </div>
                 </div>
             <?php endforeach; ?>
@@ -205,7 +223,7 @@ $relatedProducts = array_slice(array_values($relatedProducts), 0, 4);
 
 <section class="section">
     <div class="container">
-        <div class="product-inquiry">
+        <div class="product-inquiry" id="dopyt">
             <div class="product-inquiry__info">
                 <h2>Máte otázku k tomuto produktu?</h2>
                 <p>Neváhajte nás kontaktovať. Radi vám poradíme s výberom, poskytneme cenovú ponuku alebo zodpovieme vaše technické otázky.</p>
@@ -251,17 +269,21 @@ $relatedProducts = array_slice(array_values($relatedProducts), 0, 4);
         <div class="sticky-cta__inner">
             <div class="sticky-cta__info">
                 <span class="sticky-cta__name"><?= e($product['name']) ?></span>
-                <span class="sticky-cta__price"><?= formatPrice($product['price_vat']) ?></span>
+                <span class="sticky-cta__price"><?= $product['stock'] > 0 ? formatPrice($product['price_vat']) : 'Cena na vyžiadanie' ?></span>
             </div>
-            <button class="btn btn--primary btn--add-to-cart"
-                    data-id="<?= e($product['id']) ?>"
-                    data-name="<?= e($product['name']) ?>"
-                    data-price="<?= $product['price_vat'] ?>"
-                    data-image="<?= e($product['image']) ?>"
-                    data-sku="<?= e($product['sku']) ?>">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-                Pridať do košíka
-            </button>
+            <?php if ($product['stock'] > 0): ?>
+                <button class="btn btn--primary btn--add-to-cart"
+                        data-id="<?= e($product['id']) ?>"
+                        data-name="<?= e($product['name']) ?>"
+                        data-price="<?= $product['price_vat'] ?>"
+                        data-image="<?= e($product['image']) ?>"
+                        data-sku="<?= e($product['sku']) ?>">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                    Pridať do košíka
+                </button>
+            <?php else: ?>
+                <a href="#dopyt" class="btn btn--primary">Vyžiadať cenu</a>
+            <?php endif; ?>
         </div>
     </div>
 </div>

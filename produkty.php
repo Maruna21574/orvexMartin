@@ -165,18 +165,25 @@ if ($categoryFilter) {
                                     <p class="product-card__sku">Kód: <?= e($product['sku']) ?></p>
                                 </div>
                                 <div class="product-card__footer">
-                                    <div class="product-card__price">
-                                        <span class="product-card__price-vat"><?= formatPrice($product['price_vat']) ?></span>
-                                        <span class="product-card__price-net">bez DPH: <?= formatPrice($product['price']) ?></span>
-                                    </div>
-                                    <button class="btn btn--primary btn--sm btn--add-to-cart"
-                                            data-id="<?= e($product['id']) ?>"
-                                            data-name="<?= e($product['name']) ?>"
-                                            data-price="<?= $product['price_vat'] ?>"
-                                            data-image="<?= e($product['image']) ?>"
-                                            data-sku="<?= e($product['sku']) ?>">
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-                                    </button>
+                                    <?php if ($product['stock'] > 0): ?>
+                                        <div class="product-card__price">
+                                            <span class="product-card__price-vat"><?= formatPrice($product['price_vat']) ?></span>
+                                            <span class="product-card__price-net">bez DPH: <?= formatPrice($product['price']) ?></span>
+                                        </div>
+                                        <button class="btn btn--primary btn--sm btn--add-to-cart"
+                                                data-id="<?= e($product['id']) ?>"
+                                                data-name="<?= e($product['name']) ?>"
+                                                data-price="<?= $product['price_vat'] ?>"
+                                                data-image="<?= e($product['image']) ?>"
+                                                data-sku="<?= e($product['sku']) ?>">
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                                        </button>
+                                    <?php else: ?>
+                                        <div class="product-card__price">
+                                            <span class="product-card__price-vat">Cena na vyžiadanie</span>
+                                        </div>
+                                        <a href="/produkt?id=<?= e($product['id']) ?>#dopyt" class="btn btn--outline btn--sm">Vyžiadať cenu</a>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         <?php endforeach; ?>

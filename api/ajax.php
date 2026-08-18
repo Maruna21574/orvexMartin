@@ -86,7 +86,7 @@ switch ($action) {
                 'id' => $p['id'],
                 'name' => $p['name'],
                 'sku' => $p['sku'],
-                'price_vat' => formatPrice($p['price_vat']),
+                'price_vat' => $p['stock'] > 0 ? formatPrice($p['price_vat']) : 'Cena na vyžiadanie',
                 'category' => $p['category'],
                 'image' => $p['image'],
             ];
