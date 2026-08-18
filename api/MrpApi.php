@@ -430,8 +430,11 @@ class MrpApi
                 'id'          => (string)$f->cislo,
                 'name'        => (string)$f->nazev,
                 'description' => implode("\n\n", $descriptionParts),
-                'price'       => (float)$f->cena,
-                'price_vat'   => (float)$f->cenasdph,
+                // Web ma zobrazovat cenovu hladinu 2 (cena2/cena2sdph), nie
+                // vychodziu "cena"/"cenasdph" (= vzdy zhodna s cena1) - podla
+                // spatnej vazby od obchodu ma cena1 iny (nie eshopovy) ucel.
+                'price'       => (float)$f->cena2,
+                'price_vat'   => (float)$f->cena2sdph,
                 'vat_rate'    => (float)$f->sazbadph,
                 'sku'         => (string)$f->kod1,
                 'category'    => $categoryName,
