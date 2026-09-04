@@ -19,10 +19,10 @@ function getEmailFooter(): string
     </div>';
 }
 
-function sendHtmlEmail(string $to, string $subject, string $bodyHtml): bool
+function sendHtmlEmail(string $to, string $subject, string $bodyHtml, ?string $replyTo = null): bool
 {
     $headers = "From: " . COMPANY_NAME . " <noreply@orvex.sk>\r\n";
-    $headers .= "Reply-To: " . COMPANY_EMAIL . "\r\n";
+    $headers .= "Reply-To: " . ($replyTo ?? COMPANY_EMAIL) . "\r\n";
     $headers .= "MIME-Version: 1.0\r\n";
     $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
 
@@ -167,7 +167,7 @@ function sendOrderConfirmation(string $orderNumber, array $orderData, array $car
 
         <p style="margin:0;font-size:13px;color:#6b7280;line-height:1.6;">Cena dopravy bude stanovená individuálne. Faktúru vám zašleme na uvedený email. V prípade otázok nás kontaktujte na <a href="mailto:' . COMPANY_EMAIL . '" style="color:#1a5632;">' . COMPANY_EMAIL . '</a> alebo na tel. č. ' . COMPANY_PHONE . '.</p>';
 
-    sendHtmlEmail($orderData['email'], 'Potvrdenie objednávky ' . $orderNumber . ' – ' . COMPANY_NAME, $customerBody);
+    sendHtmlEmail($orderData['email'], 'Potvrdenie objednávky ' . $orderNumber . ' – ' . COMPANY_NAME, $customerBody, ADMIN_NOTIFY_EMAIL);
 
     $adminBody = '
         <h2 style="margin:0 0 4px;font-size:20px;color:#111827;">Nová objednávka</h2>
@@ -237,4 +237,55 @@ function sendOrderConfirmation(string $orderNumber, array $orderData, array $car
         <a href="mailto:' . htmlspecialchars($orderData['email']) . '" style="display:inline-block;background:#1a5632;color:#fff;text-decoration:none;padding:10px 24px;border-radius:8px;font-size:14px;font-weight:500;">Kontaktovať zákazníka</a>';
 
     sendHtmlEmail(ADMIN_NOTIFY_EMAIL, 'Nová objednávka ' . $orderNumber . ' – ' . formatPrice($total), $adminBody);
+}
+
+/**
+ * Posle zakaznikovi mail pri zmene stavu objednavky (napr. "Odoslana" - zasielka
+ * je na ceste). Posiela sa len zakaznikovi, nie na ADMIN_NOTIFY_EMAIL - zmenu
+ * stavu vykonava sam admin, netreba mu ju pripominat mailom.
+ */
+function sendOrderStatusEmail(array $order, string $newStatus, string $adminNote = ''): void
+{
+    $content = [
+        'odoslana' => [
+            'subject' => 'Objednávka odoslaná',
+            'heading' => 'Vaša objednávka je na ceste',
+            'intro'   => 'Vaša zásielka bola odoslaná.',
+        ],
+        'dorucena' => [
+            'subject' => 'Objednávka doručená',
+            'heading' => 'Vaša objednávka bola doručená',
+            'intro'   => 'Ďakujeme za nákup. Veríme, že ste spokojní.',
+        ],
+        'zrusena' => [
+            'subject' => 'Objednávka zrušená',
+            'heading' => 'Vaša objednávka bola zrušená',
+            'intro'   => 'Vaša objednávka bola zrušená.',
+        ],
+    ][$newStatus] ?? null;
+
+    if ($content === null) {
+        return;
+    }
+
+    $orderNumber = $order['order_number'];
+
+    $body = '
+        <h2 style="margin:0 0 8px;font-size:20px;color:#111827;">' . htmlspecialchars($content['heading']) . '</h2>
+        <p style="margin:0 0 24px;color:#6b7280;font-size:14px;">' . htmlspecialchars($content['intro']) . '</p>
+
+        <div style="background:#f0f7f3;border-radius:8px;padding:16px 20px;margin-bottom:24px;text-align:center;">
+            <p style="margin:0 0 4px;font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;">Číslo objednávky</p>
+            <p style="margin:0;font-size:24px;font-weight:700;color:#1a5632;">' . htmlspecialchars($orderNumber) . '</p>
+        </div>' .
+
+        (trim($adminNote) !== '' ? '
+        <div style="background:#f9fafb;border-left:3px solid #1a5632;padding:12px 16px;border-radius:0 8px 8px 0;margin-bottom:24px;">
+            <p style="margin:0 0 4px;font-size:12px;color:#6b7280;">Poznámka:</p>
+            <p style="margin:0;font-size:14px;color:#374151;">' . htmlspecialchars($adminNote) . '</p>
+        </div>' : '') . '
+
+        <p style="margin:0;font-size:13px;color:#6b7280;line-height:1.6;">V prípade otázok nás kontaktujte na <a href="mailto:' . COMPANY_EMAIL . '" style="color:#1a5632;">' . COMPANY_EMAIL . '</a> alebo na tel. č. ' . COMPANY_PHONE . '.</p>';
+
+    sendHtmlEmail($order['email'], 'Objednávka ' . $orderNumber . ' – ' . $content['subject'] . ' – ' . COMPANY_NAME, $body, ADMIN_NOTIFY_EMAIL);
 }

@@ -21,7 +21,7 @@ define('MRP_COMPANY_ID', '');
 // vygeneruj vlastnu nahodnu hodnotu, napr.: php -r "echo bin2hex(random_bytes(24));"
 define('CRON_SECRET', '');
 
-// Databáza (voliteľné - pre cache)
+// Databáza (objednávky pre admin panel)
 define('DB_HOST', 'localhost');
 define('DB_NAME', 'orvex_eshop');
 define('DB_USER', 'root');
@@ -42,6 +42,11 @@ define('COMPANY_IC_DPH', 'SK2022749168');
 
 // Adresa, na ktorú chodia notifikácie o nových objednávkach
 define('ADMIN_NOTIFY_EMAIL', 'admin@example.com');
+
+// Prihlasovacie udaje do /admin panelu. Hash vygeneruj prikazom:
+//   php -r "echo password_hash('tvoje-heslo', PASSWORD_DEFAULT);"
+define('ADMIN_USERNAME', 'admin');
+define('ADMIN_PASSWORD_HASH', '');
 
 // Nastavenia
 define('PRODUCTS_PER_PAGE', 12);
@@ -68,3 +73,4 @@ if (session_status() === PHP_SESSION_NONE) {
 // Autoload
 require_once INCLUDES_PATH . '/functions.php';
 require_once INCLUDES_PATH . '/mailer.php';
+require_once INCLUDES_PATH . '/orders.php';

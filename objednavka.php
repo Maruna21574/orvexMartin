@@ -12,7 +12,14 @@ $errors = [];
 $success = false;
 $orderNumber = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isSpamSubmission()) {
+    // Tichy no-op pre spamovacich botov - predstierame uspech (aj s cislom
+    // objednavky), aby si neuvedomili, ze boli odhaleni, ale v skutocnosti sa
+    // nic neulozi ani neposle.
+    $orderNumber = 'OBJ-' . date('Ymd') . '-' . str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+    $success = true;
+    clearCart();
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $token = $_POST['csrf_token'] ?? '';
     if (!verifyCsrfToken($token)) {
         $errors[] = 'Neplatný bezpečnostný token. Skúste to znova.';
@@ -37,14 +44,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($zip === '') $errors[] = 'Zadajte PSČ.';
 
     if (empty($errors)) {
-        $items = [];
-        foreach ($cart as $item) {
-            $items[] = [
-                'id' => $item['id'],
-                'quantity' => $item['quantity'],
-            ];
-        }
-
         $orderData = [
             'name' => $name,
             'company' => $company,
@@ -56,16 +55,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'city' => $city,
             'zip' => $zip,
             'note' => $note,
-            'items' => $items,
         ];
 
         $savedCart = $cart;
         $savedTotal = getCartTotal();
 
         // Objednávky sa negenerujú v MRP ani sa nefakturujú cez web - to rieši
-        // admin ručne v inom systéme. Tu len zaevidujeme číslo objednávky
-        // a pošleme potvrdzujúce maily (zákazníkovi aj adminovi).
-        $orderNumber = 'OBJ-' . date('Ymd') . '-' . str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+        // admin ručne v inom systéme (evidencia + zmena stavu je v /admin).
+        // Ak DB práve nie je dostupná, objednávka sa neulozi do admin panelu,
+        // ale zakaznik napriek tomu dostane potvrdenie a cislo objednavky -
+        // pri nízkom objeme tohto e-shopu je to prijatelne riziko oproti tomu,
+        // aby checkout uplne zlyhal.
+        try {
+            $order = createOrder($orderData, $savedCart, $savedTotal);
+            $orderNumber = $order['order_number'];
+        } catch (\Throwable $e) {
+            if (DEBUG_MODE) {
+                error_log('Ulozenie objednavky zlyhalo: ' . $e->getMessage());
+            }
+            $orderNumber = 'OBJ-' . date('Ymd') . '-' . str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+        }
+
         $success = true;
         clearCart();
 
@@ -118,6 +128,7 @@ $csrfToken = generateCsrfToken();
 
             <form method="POST" class="order-layout" id="orderForm" novalidate>
                 <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>">
+                <?= renderAntiSpamFields() ?>
 
                 <div class="order-form">
                     <div class="form-section">
