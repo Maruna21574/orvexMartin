@@ -103,7 +103,7 @@ $featuredProducts = array_slice(getProducts(), 0, 4);
                             </button>
                         <?php else: ?>
                             <div class="product-card__price">
-                                <span class="product-card__price-vat">Cena na vyžiadanie</span>
+                                <span class="product-card__price-vat product-card__price-vat--unavailable">Cena na vyžiadanie</span>
                             </div>
                             <a href="/produkt?id=<?= e($product['id']) ?>#dopyt" class="btn btn--outline btn--sm">Vyžiadať cenu</a>
                         <?php endif; ?>
