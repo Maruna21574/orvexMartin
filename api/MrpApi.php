@@ -26,6 +26,19 @@ class MrpApi
     ];
     private const DEFAULT_CATEGORY = 'Ostatné';
 
+    // Karty v poli "skupina" = "KS" (skupnazev "Konsignát") su na konsignacnom
+    // sklade (typicky loziska) - realny stav sa v MRP dopina len 1x mesacne,
+    // takze mimo tejto doby MRP casto ukazuje 0 (alebo aj zaporny) pocetmj a
+    // e-shop by ich nesprávne zobrazoval ako "Cena na vyžiadanie"/vypredane.
+    // Preto sa im vzdy nastavi dostatocna skladova zasoba, aby sa cena aj
+    // dostupnost zobrazovali normalne.
+    //
+    // POZOR: "skupina" (nie kod1/sku!) je jediny spolahlivy priznak - kod1
+    // zobrazeny na webe ako "Kód produktu" priponu "KS" väčšinou NEMA, aj ked
+    // ju ma interne pole "kod" (ktore sa vôbec nepouziva/nezobrazuje).
+    private const CONSIGNMENT_GROUP_CODE = 'KS';
+    private const CONSIGNMENT_STOCK_QTY  = 20;
+
     private string $apiUrl;
     private string $encKey;
     private string $authKey;
@@ -426,6 +439,10 @@ class MrpApi
                 trim((string)$f->velpopis),
             ], fn($part) => $part !== ''));
 
+            $sku     = (string)$f->kod1;
+            $skupina = trim((string)$f->skupina);
+            $stock   = $this->isConsignmentGroup($skupina) ? self::CONSIGNMENT_STOCK_QTY : (int)$f->pocetmj;
+
             $products[] = [
                 'id'          => (string)$f->cislo,
                 'name'        => (string)$f->nazev,
@@ -436,10 +453,10 @@ class MrpApi
                 'price'       => (float)$f->cena2,
                 'price_vat'   => (float)$f->cena2sdph,
                 'vat_rate'    => (float)$f->sazbadph,
-                'sku'         => (string)$f->kod1,
+                'sku'         => $sku,
                 'category'    => $categoryName,
                 'category_id' => $categoryId,
-                'stock'       => (int)$f->pocetmj,
+                'stock'       => $stock,
                 'unit'        => (string)$f->jednotka ?: 'ks',
                 'image'       => $imgPath($malobr),
                 'images'      => $images,
@@ -448,6 +465,11 @@ class MrpApi
         }
 
         return $products;
+    }
+
+    private function isConsignmentGroup(string $skupina): bool
+    {
+        return strtoupper($skupina) === self::CONSIGNMENT_GROUP_CODE;
     }
 
     private function slugify(string $text): string
