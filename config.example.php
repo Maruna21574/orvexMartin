@@ -43,6 +43,14 @@ define('COMPANY_IC_DPH', 'SK2022749168');
 // Adresa, na ktorú chodia notifikácie o nových objednávkach
 define('ADMIN_NOTIFY_EMAIL', 'admin@example.com');
 
+// SMTP (ak hosting nema funkcny system. sendmail pre PHP mail()). Port 465 =
+// SMTPS (TLS od zaciatku), 587 = STARTTLS (netestovane), lokalny mail catcher
+// (napr. Mailpit) zvycajne bez TLS/prihlasenia - nechaj SMTP_USER prazdne.
+define('SMTP_HOST', 'smtp.example.com');
+define('SMTP_PORT', 465);
+define('SMTP_USER', '');
+define('SMTP_PASS', '');
+
 // Prihlasovacie udaje do /admin panelu. Hash vygeneruj prikazom:
 //   php -r "echo password_hash('tvoje-heslo', PASSWORD_DEFAULT);"
 define('ADMIN_USERNAME', 'admin');

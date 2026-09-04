@@ -21,11 +21,6 @@ function getEmailFooter(): string
 
 function sendHtmlEmail(string $to, string $subject, string $bodyHtml, ?string $replyTo = null): bool
 {
-    $headers = "From: " . COMPANY_NAME . " <noreply@orvex.sk>\r\n";
-    $headers .= "Reply-To: " . ($replyTo ?? COMPANY_EMAIL) . "\r\n";
-    $headers .= "MIME-Version: 1.0\r\n";
-    $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
-
     $html = '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;padding:0;background:#f3f4f6;font-family:Arial,sans-serif;">';
     $html .= '<div style="max-width:600px;margin:24px auto;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb;box-shadow:0 2px 8px rgba(0,0,0,0.06);">';
     $html .= getEmailHeader();
@@ -36,7 +31,141 @@ function sendHtmlEmail(string $to, string $subject, string $bodyHtml, ?string $r
     $html .= '</div>';
     $html .= '</body></html>';
 
-    return @mail($to, '=?UTF-8?B?' . base64_encode($subject) . '?=', $html, $headers);
+    $headers = "From: " . COMPANY_NAME . " <" . SMTP_USER . ">\r\n";
+    $headers .= "To: <" . $to . ">\r\n";
+    $headers .= "Reply-To: " . ($replyTo ?? COMPANY_EMAIL) . "\r\n";
+    $headers .= "Subject: =?UTF-8?B?" . base64_encode($subject) . "?=\r\n";
+    $headers .= "Date: " . date('r') . "\r\n";
+    $headers .= "MIME-Version: 1.0\r\n";
+    $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+
+    return sendViaSmtp($to, $headers . "\r\n" . $html);
+}
+
+/**
+ * Odosle mail priamo cez SMTP (bez zavislosti na kniznici ako PHPMailer - v
+ * stajle zvysku projektu, ktory pouziva len holé sockety/cURL, napr. MrpApi).
+ * Dovod existencie: na tomto hostingu chyba systemovy "sendmail", takze PHP
+ * funkcia mail() vzdy zlyha ("Sendmail exited with non-zero exit code 127").
+ */
+function sendViaSmtp(string $to, string $rawMessage): bool
+{
+    $readResponse = function ($socket): array {
+        $lines = [];
+        while (!feof($socket)) {
+            $line = fgets($socket, 515);
+            if ($line === false) {
+                break;
+            }
+            $lines[] = $line;
+            // Viacriadkova SMTP odpoved ma na poslednom riadku za kodom medzeru
+            // (napr. "250 OK"), na predchadzajucich pomlcku ("250-...").
+            if (!isset($line[3]) || $line[3] !== '-') {
+                break;
+            }
+        }
+        $code = $lines ? (int) substr($lines[0], 0, 3) : 0;
+        return [$code, implode('', $lines)];
+    };
+
+    // Port 465 = SMTPS (sifrovanie od prveho bajtu). Lokalne (Mailpit, port
+    // 1025) sa pripaja bez sifrovania a bez prihlasenia - SMTP_USER je prazdne.
+    $useTls = (int) SMTP_PORT === 465;
+    $requiresAuth = SMTP_USER !== '';
+
+    $errno = 0;
+    $errstr = '';
+    $socket = @stream_socket_client(
+        ($useTls ? 'ssl://' : '') . SMTP_HOST . ':' . SMTP_PORT,
+        $errno,
+        $errstr,
+        15
+    );
+    if ($socket === false) {
+        error_log('SMTP: spojenie zlyhalo - ' . $errstr . ' (' . $errno . ')');
+        return false;
+    }
+    stream_set_timeout($socket, 15);
+
+    $sendCommand = function (string $command) use ($socket, $readResponse): array {
+        fwrite($socket, $command . "\r\n");
+        return $readResponse($socket);
+    };
+
+    [$code, $resp] = $readResponse($socket);
+    if ($code !== 220) {
+        error_log('SMTP: neocakavany banner - ' . $resp);
+        fclose($socket);
+        return false;
+    }
+
+    $ehloHost = parse_url(SITE_URL, PHP_URL_HOST) ?: 'localhost';
+    [$code, $resp] = $sendCommand('EHLO ' . $ehloHost);
+    if ($code !== 250) {
+        error_log('SMTP: EHLO zlyhalo - ' . $resp);
+        fclose($socket);
+        return false;
+    }
+
+    if ($requiresAuth) {
+        [$code, $resp] = $sendCommand('AUTH LOGIN');
+        if ($code !== 334) {
+            error_log('SMTP: AUTH LOGIN zlyhalo - ' . $resp);
+            fclose($socket);
+            return false;
+        }
+
+        [$code, $resp] = $sendCommand(base64_encode(SMTP_USER));
+        if ($code !== 334) {
+            error_log('SMTP: odoslanie mena zlyhalo - ' . $resp);
+            fclose($socket);
+            return false;
+        }
+
+        [$code, $resp] = $sendCommand(base64_encode(SMTP_PASS));
+        if ($code !== 235) {
+            error_log('SMTP: prihlasenie zlyhalo - ' . $resp);
+            fclose($socket);
+            return false;
+        }
+    }
+
+    $envelopeFrom = $requiresAuth ? SMTP_USER : 'noreply@' . $ehloHost;
+    [$code, $resp] = $sendCommand('MAIL FROM:<' . $envelopeFrom . '>');
+    if ($code !== 250) {
+        error_log('SMTP: MAIL FROM zlyhalo - ' . $resp);
+        fclose($socket);
+        return false;
+    }
+
+    [$code, $resp] = $sendCommand('RCPT TO:<' . $to . '>');
+    if ($code !== 250) {
+        error_log('SMTP: RCPT TO zlyhalo - ' . $resp);
+        fclose($socket);
+        return false;
+    }
+
+    [$code, $resp] = $sendCommand('DATA');
+    if ($code !== 354) {
+        error_log('SMTP: DATA zlyhalo - ' . $resp);
+        fclose($socket);
+        return false;
+    }
+
+    // Dot-stuffing - riadok zacinajuci bodkou by SMTP inak povazoval za koniec spravy.
+    $escaped = preg_replace('/^\./m', '..', $rawMessage);
+    fwrite($socket, $escaped . "\r\n.\r\n");
+    [$code, $resp] = $readResponse($socket);
+    if ($code !== 250) {
+        error_log('SMTP: odoslanie spravy zlyhalo - ' . $resp);
+        fclose($socket);
+        return false;
+    }
+
+    fwrite($socket, "QUIT\r\n");
+    fclose($socket);
+
+    return true;
 }
 
 function sendContactConfirmation(string $name, string $email, string $subject, string $message): void
