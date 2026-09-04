@@ -152,7 +152,7 @@ $featuredProducts = array_slice(getProducts(), 0, 4);
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
                 </div>
                 <h3>Dodanie po celom SR</h3>
-                <p>Spoľahlivé dodanie priamo na vašu prevádzku</p>
+                <p>Tovar skladom zvyčajne doručíme do druhého pracovného dňa</p>
             </div>
             <div class="feature">
                 <div class="feature__icon">

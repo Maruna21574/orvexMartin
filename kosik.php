@@ -87,7 +87,7 @@ $cartTotal = getCartTotal();
                         <span>Celkom s DPH</span>
                         <span id="summaryTotal"><?= formatPrice($cartTotal) ?></span>
                     </div>
-                    <p class="cart-summary__note">Cena dopravy bude stanovená individuálne podľa adresy doručenia.</p>
+                    <p class="cart-summary__note">K uvedenej sume bude pripočítané poštovné, ktoré bude stanovené individuálne podľa adresy doručenia. Tovar skladom zvyčajne doručujeme do druhého pracovného dňa.</p>
                     <a href="/objednavka" class="btn btn--primary btn--lg btn--block">Pokračovať v objednávke</a>
                     <a href="/produkty" class="btn btn--outline btn--block">Pokračovať v nákupe</a>
                 </div>
