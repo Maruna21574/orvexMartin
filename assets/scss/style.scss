@@ -1666,6 +1666,14 @@ button, input, textarea, select {
 }
 
 @media (max-width: 768px) {
+  .header__top-inner {
+    // Telefon + email vedla seba (justify-content:flex-end) sa na uzkych
+    // obrazovkach (iPhone) orezavali - pod sebou je vzdy viditelne cele.
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+  }
+
   .hero {
     padding: 50px 0;
 

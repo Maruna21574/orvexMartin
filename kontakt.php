@@ -67,7 +67,7 @@ require_once 'includes/header.php';
                     <ul class="contact-card__list">
                         <li>
                             <span class="contact-card__label">Telefón</span>
-                            <a href="tel:+421434135968">+421 43 413 59 68</a>
+                            <a href="tel:+421434135968">+421 434 135 968</a>
                         </li>
                         <li>
                             <span class="contact-card__label">Kancelária</span>

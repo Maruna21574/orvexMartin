@@ -34,7 +34,7 @@ define('COMPANY_NAME', 'ORVEX MT spol. s r.o.');
 define('COMPANY_ADDRESS', 'Školská ulica 233/5');
 define('COMPANY_CITY', 'Bystrička');
 define('COMPANY_ZIP', '038 04');
-define('COMPANY_PHONE', '+421 43 413 59 68');
+define('COMPANY_PHONE', '+421 434 135 968');
 define('COMPANY_EMAIL', 'orvex@orvex.sk');
 define('COMPANY_ICO', '44596979');
 define('COMPANY_DIC', '2022749168');

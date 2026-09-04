@@ -277,15 +277,11 @@ function sendOrderConfirmation(string $orderNumber, array $orderData, array $car
             </tr>
         </table>
 
-        <div style="display:flex;gap:24px;margin-bottom:24px;">
-            <div style="flex:1;">
-                <h3 style="margin:0 0 8px;font-size:14px;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;">Adresa doručenia</h3>
-                <p style="margin:0;font-size:14px;color:#111827;line-height:1.6;">' . $addressHtml . '</p>
-            </div>
-            <div style="flex:1;">
-                <h3 style="margin:0 0 8px;font-size:14px;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;">Kontakt</h3>
-                <p style="margin:0;font-size:14px;color:#111827;line-height:1.6;">' . htmlspecialchars($orderData['email']) . '<br>' . htmlspecialchars($orderData['phone']) . '</p>
-            </div>
+        <div style="margin-bottom:24px;">
+            <h3 style="margin:0 0 8px;font-size:14px;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;">Adresa doručenia</h3>
+            <p style="margin:0 0 16px;font-size:14px;color:#111827;line-height:1.6;">' . $addressHtml . '</p>
+            <h3 style="margin:0 0 8px;font-size:14px;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;">Kontakt</h3>
+            <p style="margin:0;font-size:14px;color:#111827;line-height:1.6;">' . htmlspecialchars($orderData['email']) . '<br>' . htmlspecialchars($orderData['phone']) . '</p>
         </div>' .
 
         (!empty($orderData['note']) ? '
