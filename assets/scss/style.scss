@@ -1254,6 +1254,18 @@ button, input, textarea, select {
   gap: 16px;
 }
 
+// Honeypot pole proti spamovacim botom (formulare kontakt/dopyt/objednavka) -
+// skryte mimo viditelnej oblasti, nie display:none, aby ho boti castejsie
+// aj tak vyplnili (viz includes/functions.php: renderAntiSpamFields()).
+.hp-field {
+  position: absolute;
+  left: -9999px;
+  top: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
 .form-group {
   &--full {
     grid-column: 1 / -1;

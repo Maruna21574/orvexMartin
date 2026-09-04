@@ -32,6 +32,7 @@
             </div>
             <form class="cform" id="contactForm">
                 <input type="hidden" name="csrf_token" value="<?= e(generateCsrfToken()) ?>">
+                <?= renderAntiSpamFields() ?>
                 <div class="cform__grid">
                     <div class="form-group">
                         <label for="cf_name">Meno a priezvisko <span class="required">*</span></label>

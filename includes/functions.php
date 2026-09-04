@@ -376,3 +376,29 @@ function verifyCsrfToken(string $token): bool
 {
     return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
 }
+
+// Jednoduchá ochrana verejných formulárov (kontakt, dopyt, objednávka) pred
+// spamovacimi botmi - bez CAPTCHA/externych sluzieb. Kombinuje honeypot pole
+// (skryte cez CSS, nie type="hidden" - to boti castejsie preskocia) s
+// kontrolou minimalneho casu medzi vykreslenim a odoslanim formulara (boti
+// zvycajne odosielaju takmer okamzite).
+function renderAntiSpamFields(): string
+{
+    return '<div class="hp-field" aria-hidden="true"><label for="extra_info">Nechajte prázdne</label>'
+        . '<input type="text" id="extra_info" name="extra_info" tabindex="-1" autocomplete="off"></div>'
+        . '<input type="hidden" name="form_ts" value="' . time() . '">';
+}
+
+function isSpamSubmission(): bool
+{
+    if (trim($_POST['extra_info'] ?? '') !== '') {
+        return true;
+    }
+
+    $formTs = (int) ($_POST['form_ts'] ?? 0);
+    if ($formTs <= 0 || time() - $formTs < 2) {
+        return true;
+    }
+
+    return false;
+}

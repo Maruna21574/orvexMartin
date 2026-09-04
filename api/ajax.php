@@ -116,6 +116,13 @@ switch ($action) {
             exit;
         }
 
+        // Tichy no-op pre spamovacich botov - predstierame uspech, aby si
+        // neuvedomili, ze boli odhaleni, ale mail sa v skutocnosti neposiela.
+        if (isSpamSubmission()) {
+            echo json_encode(['success' => true, 'message' => 'Správa bola odoslaná. Potvrdenie sme vám poslali na e-mail.']);
+            exit;
+        }
+
         $name = trim($_POST['name'] ?? '');
         $email = trim($_POST['email'] ?? '');
         $phone = trim($_POST['phone'] ?? '');

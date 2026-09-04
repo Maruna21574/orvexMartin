@@ -241,6 +241,7 @@ $relatedProducts = array_slice(array_values($relatedProducts), 0, 4);
             <form class="product-inquiry__form" id="contactForm">
                 <input type="hidden" name="csrf_token" value="<?= e(generateCsrfToken()) ?>">
                 <input type="hidden" name="subject" value="dopyt">
+                <?= renderAntiSpamFields() ?>
                 <div class="form-group">
                     <input type="text" name="name" required placeholder="Meno a priezvisko *">
                 </div>
