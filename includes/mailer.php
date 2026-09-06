@@ -2,10 +2,14 @@
 
 function getEmailHeader(): string
 {
-    $logoUrl = SITE_URL . '/assets/images/orvex_logo_hl.png';
+    // orvex_logo_white.png je vygenerovana biela verzia loga (z orvex_logo_hl.png,
+    // ktory je tmavozeleny) - predtym sa na biely vzhlad spolahalo na CSS
+    // filter:invert(), ktory Gmail (a dalsi mailovi klienti) v HTML mailoch
+    // ignoruju/odstranuju, cim sa zobrazovalo povodne tmavozelene logo.
+    $logoUrl = SITE_URL . '/assets/images/orvex_logo_white.png';
     return '
     <div style="background:#1a5632;padding:20px 32px;text-align:center;">
-        <img src="' . $logoUrl . '" alt="' . COMPANY_NAME . '" style="height:44px;width:auto;filter:brightness(0) invert(1);">
+        <img src="' . $logoUrl . '" alt="' . COMPANY_NAME . '" style="height:44px;width:auto;">
     </div>';
 }
 
