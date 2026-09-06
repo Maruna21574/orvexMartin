@@ -38,11 +38,9 @@
                 <div class="footer__col">
                     <h4>Kategórie</h4>
                     <ul>
-                        <li><a href="/produkty?kategoria=lesna-technika">Lesná technika</a></li>
-                        <li><a href="/produkty?kategoria=hydraulicke-cerpadla">Hydraulické čerpadlá</a></li>
-                        <li><a href="/produkty?kategoria=snehove-retaze">Snehové reťaze</a></li>
-                        <li><a href="/produkty?kategoria=lanove-uvazky">Lanové úväzky</a></li>
-                        <li><a href="/produkty?kategoria=nahradne-diely">Náhradné diely</a></li>
+                        <?php foreach (getCategories() as $footerCategory): ?>
+                            <li><a href="/produkty?kategoria=<?= e($footerCategory['id']) ?>"><?= e($footerCategory['name']) ?></a></li>
+                        <?php endforeach; ?>
                     </ul>
                 </div>
                 <div class="footer__col">
