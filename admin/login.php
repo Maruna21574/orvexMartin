@@ -58,7 +58,7 @@ $csrfToken = generateCsrfToken();
                 <label for="password">Heslo</label>
                 <input type="password" id="password" name="password" required>
             </div>
-            <button type="submit" class="btn btn--primary btn--block">Prihlásiť sa</button>
+            <button type="submit" class="btn btn--primary btn--block" style="margin-top:20px;">Prihlásiť sa</button>
         </form>
     </div>
 </body>

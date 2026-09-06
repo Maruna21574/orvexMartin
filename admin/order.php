@@ -47,7 +47,7 @@ $nextStatuses = getValidNextStatuses($order['status']);
 <p><span class="badge badge--<?= e($order['status']) ?>"><?= e(ORDER_STATUS_LABELS[$order['status']] ?? $order['status']) ?></span></p>
 
 <?php if ($statusChanged): ?>
-    <div class="alert alert--success">
+    <div class="alert alert--success" style="margin-top:20px;">
         <p>Stav objednávky bol zmenený a zákazníkovi bol odoslaný e-mail.</p>
     </div>
 <?php endif; ?>
