@@ -51,6 +51,11 @@ define('SMTP_PORT', 465);
 define('SMTP_USER', '');
 define('SMTP_PASS', '');
 
+// IMAP (na zapis admin notifikacie priamo do schranky ADMIN_NOTIFY_EMAIL,
+// ked je to ta ista schranka ako SMTP_USER - viz appendToInbox() v mailer.php).
+define('IMAP_HOST', 'imap.example.com');
+define('IMAP_PORT', 993);
+
 // Prihlasovacie udaje do /admin panelu. Hash vygeneruj prikazom:
 //   php -r "echo password_hash('tvoje-heslo', PASSWORD_DEFAULT);"
 define('ADMIN_USERNAME', 'admin');

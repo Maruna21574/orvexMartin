@@ -19,7 +19,7 @@ function getEmailFooter(): string
     </div>';
 }
 
-function sendHtmlEmail(string $to, string $subject, string $bodyHtml, ?string $replyTo = null): bool
+function buildEmailHtml(string $bodyHtml): string
 {
     $html = '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;padding:0;background:#f3f4f6;font-family:Arial,sans-serif;">';
     $html .= '<div style="max-width:600px;margin:24px auto;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb;box-shadow:0 2px 8px rgba(0,0,0,0.06);">';
@@ -30,7 +30,11 @@ function sendHtmlEmail(string $to, string $subject, string $bodyHtml, ?string $r
     $html .= getEmailFooter();
     $html .= '</div>';
     $html .= '</body></html>';
+    return $html;
+}
 
+function sendHtmlEmail(string $to, string $subject, string $bodyHtml, ?string $replyTo = null): bool
+{
     $headers = "From: " . COMPANY_NAME . " <" . SMTP_USER . ">\r\n";
     $headers .= "To: <" . $to . ">\r\n";
     $headers .= "Reply-To: " . ($replyTo ?? COMPANY_EMAIL) . "\r\n";
@@ -39,7 +43,82 @@ function sendHtmlEmail(string $to, string $subject, string $bodyHtml, ?string $r
     $headers .= "MIME-Version: 1.0\r\n";
     $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
 
-    return sendViaSmtp($to, $headers . "\r\n" . $html);
+    return sendViaSmtp($to, $headers . "\r\n" . buildEmailHtml($bodyHtml));
+}
+
+/**
+ * Notifikacie adminovi chodia na tu istu schranku (SMTP_USER), z ktorej sa aj
+ * odosiela - "mail sam sebe" ale Websupport (a bezne mailservery vseobecne)
+ * takéto self-send spravy potichu zahadzuju ako anti-loop ochranu (aj ked
+ * SMTP prijme "250 OK", sprava sa nikdy nedoruci). Preto sa namiesto SMTP
+ * odoslania sprava zapisuje priamo do schranky cez IMAP APPEND - to nie je
+ * "odoslanie" v zmysle mail transportu, takze sa anti-loop ochrana neuplatni.
+ */
+function appendToInbox(string $subject, string $bodyHtml): bool
+{
+    $rawMessage = "From: " . COMPANY_NAME . " <" . SMTP_USER . ">\r\n";
+    $rawMessage .= "To: <" . SMTP_USER . ">\r\n";
+    $rawMessage .= "Subject: =?UTF-8?B?" . base64_encode($subject) . "?=\r\n";
+    $rawMessage .= "Date: " . date('r') . "\r\n";
+    $rawMessage .= "Message-ID: <" . uniqid('', true) . "@" . (parse_url(SITE_URL, PHP_URL_HOST) ?: 'orvex.sk') . ">\r\n";
+    $rawMessage .= "MIME-Version: 1.0\r\n";
+    $rawMessage .= "Content-Type: text/html; charset=UTF-8\r\n";
+    $rawMessage .= "\r\n";
+    $rawMessage .= buildEmailHtml($bodyHtml);
+
+    $socket = @stream_socket_client('ssl://' . IMAP_HOST . ':' . IMAP_PORT, $errno, $errstr, 15);
+    if ($socket === false) {
+        error_log('IMAP: spojenie zlyhalo - ' . $errstr . ' (' . $errno . ')');
+        return false;
+    }
+    stream_set_timeout($socket, 15);
+
+    $readUntilTagged = function (string $tag) use ($socket): string {
+        $resp = '';
+        while (!feof($socket)) {
+            $line = fgets($socket, 8192);
+            if ($line === false) {
+                break;
+            }
+            $resp .= $line;
+            if (str_starts_with($line, $tag)) {
+                break;
+            }
+        }
+        return $resp;
+    };
+    $imapQuote = fn (string $v): string => '"' . str_replace(['\\', '"'], ['\\\\', '\\"'], $v) . '"';
+
+    fgets($socket, 8192); // greeting
+
+    fwrite($socket, 'A1 LOGIN ' . $imapQuote(SMTP_USER) . ' ' . $imapQuote(SMTP_PASS) . "\r\n");
+    $resp = $readUntilTagged('A1');
+    if (!str_contains($resp, 'A1 OK')) {
+        error_log('IMAP: prihlasenie zlyhalo - ' . $resp);
+        fclose($socket);
+        return false;
+    }
+
+    fwrite($socket, 'A2 APPEND INBOX (\\Seen) {' . strlen($rawMessage) . "}\r\n");
+    $cont = fgets($socket, 8192);
+    if ($cont === false || !str_starts_with(trim($cont), '+')) {
+        error_log('IMAP: APPEND continuation zlyhala - ' . $cont);
+        fclose($socket);
+        return false;
+    }
+
+    fwrite($socket, $rawMessage . "\r\n");
+    $resp = $readUntilTagged('A2');
+
+    fwrite($socket, "A3 LOGOUT\r\n");
+    fclose($socket);
+
+    if (!str_contains($resp, 'A2 OK')) {
+        error_log('IMAP: APPEND zlyhal - ' . $resp);
+        return false;
+    }
+
+    return true;
 }
 
 /**
@@ -361,7 +440,11 @@ function sendOrderConfirmation(string $orderNumber, array $orderData, array $car
 
         <a href="mailto:' . htmlspecialchars($orderData['email']) . '" style="display:inline-block;background:#1a5632;color:#fff;text-decoration:none;padding:10px 24px;border-radius:8px;font-size:14px;font-weight:500;">Kontaktovať zákazníka</a>';
 
-    sendHtmlEmail(ADMIN_NOTIFY_EMAIL, 'Nová objednávka ' . $orderNumber . ' – ' . formatPrice($total), $adminBody);
+    // ADMIN_NOTIFY_EMAIL je zvycajne ta ista schranka, z ktorej sa maily
+    // odosielaju (SMTP_USER) - normalne SMTP odoslanie "sam sebe" by tichuo
+    // zlyhalo (anti-loop ochrana mailservera), preto sa zapisuje priamo do
+    // schranky cez IMAP (viz appendToInbox()).
+    appendToInbox('Nová objednávka ' . $orderNumber . ' – ' . formatPrice($total), $adminBody);
 }
 
 /**
