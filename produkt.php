@@ -15,6 +15,10 @@ if (!$product) {
 
 $pageTitle = $product['name'];
 $pageDescription = mb_substr(strip_tags($product['description']), 0, 160);
+$pageProduct = true;
+if (!empty($product['image'])) {
+    $pageImage = SITE_URL . '/' . $product['image'];
+}
 require_once 'includes/header.php';
 ?>
 

@@ -9,6 +9,9 @@ RewriteBase /
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.*)/$ /$1 [L,R=301]
 
+# sitemap.xml -> sitemap.php (Google/roboti ocakavaju standardnu .xml priponu)
+RewriteRule ^sitemap\.xml$ /sitemap.php [L]
+
 # Cistes URL bez pripony .php (napr. /produkty namiesto /produkty.php) -
 # interne sa dorata .php a obsluzi sa dany subor, v adresnom riadku zostava
 # cista URL. $_SERVER['SCRIPT_NAME'] zostava povodny .php nazov, takze
@@ -37,7 +40,7 @@ ErrorDocument 404 /404.php
 </FilesMatch>
 
 # Allow PHP files in root and api directory
-<FilesMatch "^(index|produkty|produkt|kosik|objednavka|kontakt|o-nas|obchodne-podmienky|reklamacny-poriadok|ochrana-osobnych-udajov|404|ajax)\.php$">
+<FilesMatch "^(index|produkty|produkt|kosik|objednavka|kontakt|o-nas|obchodne-podmienky|reklamacny-poriadok|ochrana-osobnych-udajov|404|ajax|sitemap)\.php$">
     <IfModule mod_authz_core.c>
         Require all granted
     </IfModule>
