@@ -458,7 +458,13 @@ class MrpApi
                 'category_id' => $categoryId,
                 'stock'       => $stock,
                 'unit'        => (string)$f->jednotka ?: 'ks',
-                'image'       => $imgPath($malobr),
+                // MRP v beznej (nie velObraz=T) odpovedi neposiela binarne data
+                // pre "maly" obrazok (malobraz je vzdy prazdny retazec) - subor
+                // pomenovany podla "malobr" sa preto nikdy nestiahne a nebude
+                // nikdy existovat. importAllImages() stahuje vylucne "velobr".
+                // Hlavny "image" preto musi prednostne skusat velobr, inak by
+                // produkty s uz stiahnutou fotkou navzdy vyzerali ako bez fotky.
+                'image'       => $imgPath($velobr) ?: $imgPath($malobr),
                 'images'      => $images,
                 'params'      => [],
             ];
