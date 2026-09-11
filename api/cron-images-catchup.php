@@ -33,26 +33,21 @@ $noImage = array_flip($api->getNoImageIds());
 $onlyIds = array_values(array_filter($missingIds, fn($id) => !isset($noImage[$id])));
 
 logLine('Chybajucich fotiek: ' . count($missingIds) . ', na doplnenie: ' . count($onlyIds));
+logLine('Prve karty na overenie: ' . implode(', ', array_slice($onlyIds, 0, 10)));
 
 if (empty($onlyIds)) {
     logLine('Vsetko doplnene, netreba nic stahovat.');
 } else {
     $imgStats = $api->importAllImages(function (array $stats, ?string $error) {
         $line = "davka {$stats['done']}/{$stats['batches']} - ulozene: {$stats['saved']}, preskocene: {$stats['skipped']}, chyby: {$stats['errors']}";
+        $line .= " | existujuce fotky: {$stats['existing']}, bez fotky v MRP: {$stats['no_image']}";
         if ($error) {
             $line .= ' | ' . $error;
         }
         logLine($line);
     }, BATCH_SIZE, $onlyIds, MAX_BATCHES);
 
-    if (($imgStats['saved'] ?? 0) > 0) {
-        logLine('Obnovujem cache kvoli novym fotkam...');
-        try {
-            $api->refreshProducts();
-        } catch (\Throwable $e) {
-            logLine('MRP nedostupne (' . $e->getMessage() . ').');
-        }
-    }
+    logLine('Priebeh sa uklada po kazdej uspesnej davke priamo do cache.');
 }
 
 $elapsed = round(microtime(true) - $start);

@@ -117,7 +117,9 @@ class MrpApi
     {
         $existing = $this->getNoImageIds();
         $merged = array_values(array_unique(array_merge($existing, $newIds)));
-        file_put_contents(self::NO_IMAGE_FILE, json_encode($merged));
+        if (file_put_contents(self::NO_IMAGE_FILE, json_encode($merged), LOCK_EX) === false) {
+            throw new RuntimeException('Nepodarilo sa ulozit cache/no-image-ids.json. Skontrolujte prava zapisu.');
+        }
     }
 
     private function loadFromCache(): ?array
@@ -213,10 +215,14 @@ class MrpApi
             $batches = array_slice($batches, 0, $maxBatches);
         }
 
-        $stats = ['batches' => count($batches), 'done' => 0, 'saved' => 0, 'skipped' => 0, 'errors' => 0];
+        $stats = ['batches' => count($batches), 'done' => 0, 'saved' => 0, 'skipped' => 0, 'errors' => 0, 'existing' => 0, 'no_image' => 0];
         $confirmedNoImage = [];
 
         foreach ($batches as $batch) {
+            $confirmedNoImage = [];
+            $imagePaths = [];
+            $seen = [];
+            $stats['done']++;
             try {
                 $xml = $this->sendCommand('EXPEO0', [
                     'velObraz'     => 'T',
@@ -226,15 +232,28 @@ class MrpApi
                 if (isset($xml->data->datasets->karty->rows->row)) {
                     foreach ($xml->data->datasets->karty->rows->row as $row) {
                         $f = $row->fields;
+                        $id = trim((string)$f->cislo);
+                        if (!in_array($id, array_map('strval', $batch), true)) {
+                            throw new RuntimeException('MRP vratilo nevyziadanu kartu: ' . $id . '. Skontrolujte filter SKKAR.CISLO.');
+                        }
+                        $seen[$id] = true;
                         $velobr   = trim((string)$f->velobr);
                         $velobraz = (string)$f->velobraz;
 
+                        $existingPath = $this->resolveImagePath($velobr);
+                        if ($existingPath !== '') {
+                            $imagePaths[$id] = $existingPath;
+                            $stats['existing']++;
+                            $stats['skipped']++;
+                            continue;
+                        }
                         if ($velobr === '' || $velobraz === '') {
                             $stats['skipped']++;
+                            $stats['no_image']++;
                             // MRP pre tuto kartu nema ziadnu fotku - zapamatame si to trvalo,
                             // aby ju dalsie behy uz znova neoverovali (bez toho by kazdy beh
                             // strácal cast svojho maleho casoveho rozpoctu na tie iste "prazdne" karty).
-                            $confirmedNoImage[] = (string)$f->cislo;
+                            $confirmedNoImage[] = $id;
                             continue;
                         }
 
@@ -242,6 +261,11 @@ class MrpApi
                         $alreadyExisted = file_exists($path);
 
                         $this->saveImage($velobraz, $velobr);
+                        $resolvedPath = $this->resolveImagePath($velobr);
+                        if ($resolvedPath === '') {
+                            throw new RuntimeException('Fotku karty ' . $id . ' sa nepodarilo ulozit.');
+                        }
+                        $imagePaths[$id] = $resolvedPath;
 
                         if ($alreadyExisted) {
                             $stats['skipped']++;
@@ -249,6 +273,34 @@ class MrpApi
                             $stats['saved']++;
                         }
                     }
+                }
+                if (count($seen) !== count(array_unique($batch))) {
+                    throw new RuntimeException('MRP nevratilo vsetky vyziadane karty; nevratene karty ostavaju na dalsi pokus.');
+                }
+                // Save progress before reporting success, including files that already existed.
+                if ($imagePaths !== []) {
+                    $products = $this->loadFromCacheIgnoringTtl();
+                    if ($products === null) {
+                        throw new RuntimeException('Produktova cache chyba alebo je neplatna.');
+                    }
+                    foreach ($products as &$product) {
+                        if (isset($imagePaths[$product['id']])) {
+                            $product['image'] = $imagePaths[$product['id']];
+                            $product['images'] = array_values(array_unique(array_merge($product['images'] ?? [], [$product['image']])));
+                        }
+                    }
+                    unset($product);
+                    $mtime = filemtime(self::CACHE_FILE);
+                    if (file_put_contents(self::CACHE_FILE, json_encode($products, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR), LOCK_EX) === false) {
+                        throw new RuntimeException('Nepodarilo sa ulozit produktovu cache. Skontrolujte prava zapisu.');
+                    }
+                    if ($mtime !== false) {
+                        touch(self::CACHE_FILE, $mtime);
+                    }
+                    $this->cachedProducts = $products;
+                }
+                if ($confirmedNoImage !== []) {
+                    $this->rememberNoImageIds($confirmedNoImage);
                 }
             } catch (\Throwable $e) {
                 $stats['errors']++;
@@ -258,24 +310,16 @@ class MrpApi
                 continue;
             }
 
-            $stats['done']++;
             if ($onProgress) {
                 $onProgress($stats, null);
             }
 
-            // Uklada sa po kazdej davke (nie az na konci) - proces moze byt
-            // predcasne ukonceny (napr. limitom hostingu na dlho bezice CLI
-            // procesy), a nechceme prist o uz zistene "bez fotky" karty.
-            if (!empty($confirmedNoImage)) {
-                $this->rememberNoImageIds($confirmedNoImage);
-                $confirmedNoImage = [];
-            }
         }
 
         return $stats;
     }
 
-    private function sendCommand(string $command, array $filterOverrides = [], int $timeoutSeconds = 30): SimpleXMLElement
+    protected function sendCommand(string $command, array $filterOverrides = [], int $timeoutSeconds = 30): SimpleXMLElement
     {
         $filters = array_merge([
             'stavy'     => 'F',
