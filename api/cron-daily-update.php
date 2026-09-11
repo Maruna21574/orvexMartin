@@ -12,7 +12,8 @@
 // 3 minutach, aj na pozadi/nohup). Bezny nocny beh (par novych produktov)
 // sa do limitu pohodlne zmesti; velky jednorazovy dohlad pri prvom nasadeni
 // treba spustit opakovane (viackrat po sebe, viz README/dokumentacia).
-const BATCH_SIZE = 25;
+// 25 kariet s velkymi fotkami prekrocilo 120s timeout (odpoved vyse 50 MB).
+const BATCH_SIZE = 5;
 const MAX_BATCHES = 3;
 
 require_once __DIR__ . '/../config.php';

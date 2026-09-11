@@ -11,7 +11,9 @@
 // k novo pridanym produktom.
 //
 // Spustenie: php api/cron-images-catchup.php
-const BATCH_SIZE = 25;
+// 25 kariet moze tvorit vyse 50 MB a prekrocit 120s timeout MRP.
+// Mensie davky ukladaju priebeh castejsie aj pri velkych fotkach.
+const BATCH_SIZE = 5;
 const MAX_BATCHES = 3;
 
 require_once __DIR__ . '/../config.php';
@@ -34,6 +36,7 @@ $onlyIds = array_values(array_filter($missingIds, fn($id) => !isset($noImage[$id
 
 logLine('Chybajucich fotiek: ' . count($missingIds) . ', na doplnenie: ' . count($onlyIds));
 logLine('Prve karty na overenie: ' . implode(', ', array_slice($onlyIds, 0, 10)));
+logLine('Velkost davky: ' . BATCH_SIZE . ', maximum davok: ' . MAX_BATCHES);
 
 if (empty($onlyIds)) {
     logLine('Vsetko doplnene, netreba nic stahovat.');
