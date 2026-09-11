@@ -49,7 +49,7 @@ require_once 'includes/header.php';
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 </div>
                 <h3>Pracovná doba</h3>
-                <span class="contact-box__value">Po - Pi: 7:00 - 15:30</span>
+                <span class="contact-box__value">Po - Pi: 8:00 - 16:00</span>
             </div>
         </div>
     </div>

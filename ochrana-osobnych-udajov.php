@@ -76,6 +76,7 @@ require_once 'includes/header.php';
 
             <h2>VII. Cookies</h2>
             <p>Naša internetová stránka používa cookies nevyhnutné pre správne fungovanie stránky (session cookies pre košík a prihlásenie). Tieto cookies sú technicky nevyhnutné a nevyžadujú súhlas.</p>
+            <p>Momentálne nepoužívame žiadne analytické ani marketingové cookies. Pripravili sme však nástroj na správu súhlasu s cookies, cez ktorý si môžete kedykoľvek nastaviť svoje preferencie pre prípad, že by sme takéto cookies v budúcnosti pridali. Nastavenia otvoríte kliknutím na plávajúcu ikonku cookies v rohu obrazovky alebo cez odkaz „Nastavenia cookies“ v pätičke stránky.</p>
 
             <h2>VIII. Kontakt</h2>
             <p>V prípade otázok ohľadom spracovania osobných údajov nás kontaktujte na e-mailovej adrese <a href="mailto:<?= e(COMPANY_EMAIL) ?>"><?= e(COMPANY_EMAIL) ?></a> alebo písomne na adrese sídla spoločnosti.</p>

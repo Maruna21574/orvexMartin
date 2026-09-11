@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initHeaderScroll();
     initCardTilt();
     initHeroGlow();
+    initCookieConsent();
 });
 
 // === MOBILE MENU ===
@@ -69,8 +70,8 @@ function initLiveSearch() {
         clearTimeout(timer);
 
         if (q.length < 3) {
-            dropdown.classList.remove('open');
-            dropdown.innerHTML = '';
+            dropdown.innerHTML = '<div class="search-dropdown__empty">Katalógové číslo zadávajte bez pomlčiek</div>';
+            dropdown.classList.add('open');
             currentQuery = '';
             return;
         }
@@ -144,7 +145,10 @@ function initLiveSearch() {
     });
 
     input.addEventListener('focus', function () {
-        if (dropdown.innerHTML && input.value.trim().length >= 3) {
+        if (input.value.trim().length < 3) {
+            dropdown.innerHTML = '<div class="search-dropdown__empty">Katalógové číslo zadávajte bez pomlčiek</div>';
+            dropdown.classList.add('open');
+        } else if (dropdown.innerHTML) {
             dropdown.classList.add('open');
         }
     });
@@ -653,4 +657,116 @@ function showToast(message) {
     setTimeout(function () {
         toast.classList.remove('show');
     }, 3000);
+}
+
+// === COOKIE CONSENT ===
+var COOKIE_CONSENT_KEY = 'orvex_cookie_consent';
+
+function getCookieConsent() {
+    try {
+        var raw = localStorage.getItem(COOKIE_CONSENT_KEY);
+        return raw ? JSON.parse(raw) : null;
+    } catch (e) {
+        return null;
+    }
+}
+
+function saveCookieConsent(analytics, marketing) {
+    var consent = { necessary: true, analytics: !!analytics, marketing: !!marketing, ts: Date.now() };
+    try {
+        localStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify(consent));
+    } catch (e) {}
+    document.dispatchEvent(new CustomEvent('cookieconsentchange', { detail: consent }));
+    return consent;
+}
+
+// window.cookieConsent.has('analytics'|'marketing') - pre buduce skripty (napr. GA),
+// ktore sa maju nacitat len so suhlasom uzivatela.
+window.cookieConsent = {
+    get: getCookieConsent,
+    has: function (category) {
+        var consent = getCookieConsent();
+        return !!(consent && consent[category]);
+    }
+};
+
+function initCookieConsent() {
+    var banner = document.getElementById('cookieBanner');
+    var overlay = document.getElementById('cookieModalOverlay');
+    var fab = document.getElementById('cookieFab');
+    if (!banner || !overlay || !fab) return;
+
+    var acceptBtn = document.getElementById('cookieAcceptBtn');
+    var declineBtn = document.getElementById('cookieDeclineBtn');
+    var settingsBtn = document.getElementById('cookieSettingsBtn');
+    var footerLink = document.getElementById('cookieSettingsFooterLink');
+    var closeBtn = document.getElementById('cookieModalClose');
+    var saveBtn = document.getElementById('cookieSaveBtn');
+    var declineAllBtn = document.getElementById('cookieDeclineAllBtn');
+    var analyticsToggle = document.getElementById('cookieAnalyticsToggle');
+    var marketingToggle = document.getElementById('cookieMarketingToggle');
+
+    function showBanner() {
+        banner.hidden = false;
+        fab.hidden = true;
+    }
+
+    function hideBanner() {
+        banner.hidden = true;
+        fab.hidden = false;
+    }
+
+    function openModal() {
+        var consent = getCookieConsent();
+        analyticsToggle.checked = !!(consent && consent.analytics);
+        marketingToggle.checked = !!(consent && consent.marketing);
+        overlay.hidden = false;
+    }
+
+    function closeModal() {
+        overlay.hidden = true;
+    }
+
+    var existingConsent = getCookieConsent();
+    if (existingConsent) {
+        hideBanner();
+    } else {
+        showBanner();
+    }
+
+    if (acceptBtn) acceptBtn.addEventListener('click', function () {
+        saveCookieConsent(true, true);
+        hideBanner();
+    });
+
+    if (declineBtn) declineBtn.addEventListener('click', function () {
+        saveCookieConsent(false, false);
+        hideBanner();
+    });
+
+    if (settingsBtn) settingsBtn.addEventListener('click', openModal);
+    if (footerLink) footerLink.addEventListener('click', openModal);
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+
+    overlay.addEventListener('click', function (e) {
+        if (e.target === overlay) closeModal();
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && !overlay.hidden) closeModal();
+    });
+
+    if (saveBtn) saveBtn.addEventListener('click', function () {
+        saveCookieConsent(analyticsToggle.checked, marketingToggle.checked);
+        closeModal();
+        hideBanner();
+    });
+
+    if (declineAllBtn) declineAllBtn.addEventListener('click', function () {
+        saveCookieConsent(false, false);
+        closeModal();
+        hideBanner();
+    });
+
+    if (fab) fab.addEventListener('click', openModal);
 }

@@ -49,6 +49,12 @@
                         <li><a href="/obchodne-podmienky">Obchodné podmienky</a></li>
                         <li><a href="/reklamacny-poriadok">Reklamačný poriadok</a></li>
                         <li><a href="/ochrana-osobnych-udajov">Ochrana osobných údajov</a></li>
+                        <li>
+                            <button type="button" class="footer__cookie-link" id="cookieSettingsFooterLink">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="8.5" cy="10.5" r="1"/><circle cx="12" cy="15" r="1"/><circle cx="15.5" cy="9" r="1"/></svg>
+                                Nastavenia cookies
+                            </button>
+                        </li>
                     </ul>
                 </div>
                 <div class="footer__col">
@@ -86,6 +92,72 @@
 
     <button class="back-to-top" id="backToTop" aria-label="Späť hore">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>
+    </button>
+
+    <div class="cookie-banner" id="cookieBanner" hidden>
+        <div class="cookie-banner__inner">
+            <div class="cookie-banner__icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="8.5" cy="10.5" r="1"/><circle cx="12" cy="15" r="1"/><circle cx="15.5" cy="9" r="1"/></svg>
+            </div>
+            <div class="cookie-banner__text">
+                <h4>Používame cookies</h4>
+                <p>Nevyhnutné cookies potrebujeme pre fungovanie stránky (napr. košík). So súhlasom môžeme použiť aj analytické a marketingové cookies. Viac v <a href="/ochrana-osobnych-udajov">Ochrane osobných údajov</a>.</p>
+            </div>
+            <div class="cookie-banner__actions">
+                <button type="button" class="btn btn--outline btn--sm" id="cookieSettingsBtn">Nastavenia</button>
+                <button type="button" class="btn btn--outline btn--sm" id="cookieDeclineBtn">Odmietnuť</button>
+                <button type="button" class="btn btn--primary btn--sm" id="cookieAcceptBtn">Prijať všetko</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="cookie-modal-overlay" id="cookieModalOverlay" hidden>
+        <div class="cookie-modal" role="dialog" aria-modal="true" aria-labelledby="cookieModalTitle">
+            <div class="cookie-modal__header">
+                <h3 id="cookieModalTitle">Nastavenia cookies</h3>
+                <button type="button" class="cookie-modal__close" id="cookieModalClose" aria-label="Zavrieť">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="cookie-modal__body">
+                <p>Vyberte si, ktoré cookies chcete povoliť. Nevyhnutné cookies sú vždy aktívne, keďže bez nich stránka nefunguje správne.</p>
+                <div class="cookie-category">
+                    <div class="cookie-category__head">
+                        <span>Nevyhnutné</span>
+                        <span class="cookie-category__locked">Vždy aktívne</span>
+                    </div>
+                    <p>Potrebné pre základné fungovanie stránky - napríklad zapamätanie obsahu košíka. Nedajú sa vypnúť.</p>
+                </div>
+                <div class="cookie-category">
+                    <div class="cookie-category__head">
+                        <span>Analytické</span>
+                        <label class="cookie-toggle">
+                            <input type="checkbox" id="cookieAnalyticsToggle">
+                            <span class="cookie-toggle__slider"></span>
+                        </label>
+                    </div>
+                    <p>Pomáhajú nám pochopiť, ako návštevníci stránku používajú, aby sme ju mohli zlepšovať.</p>
+                </div>
+                <div class="cookie-category">
+                    <div class="cookie-category__head">
+                        <span>Marketingové</span>
+                        <label class="cookie-toggle">
+                            <input type="checkbox" id="cookieMarketingToggle">
+                            <span class="cookie-toggle__slider"></span>
+                        </label>
+                    </div>
+                    <p>Používajú sa na zobrazovanie relevantnej reklamy na tejto a iných stránkach.</p>
+                </div>
+            </div>
+            <div class="cookie-modal__footer">
+                <button type="button" class="btn btn--outline btn--sm" id="cookieDeclineAllBtn">Odmietnuť všetko</button>
+                <button type="button" class="btn btn--primary btn--sm" id="cookieSaveBtn">Uložiť nastavenia</button>
+            </div>
+        </div>
+    </div>
+
+    <button class="cookie-fab" id="cookieFab" aria-label="Nastavenia cookies" hidden>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="8.5" cy="10.5" r="1"/><circle cx="12" cy="15" r="1"/><circle cx="15.5" cy="9" r="1"/></svg>
     </button>
 
     <script src="/assets/js/app.js"></script>
