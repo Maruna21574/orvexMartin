@@ -1,13 +1,22 @@
 <?php
 // Docasny diagnosticky skript na zistenie, preco hosting nevie dosiahnut MRP
 // API (napr. "MRP nedostupne" v cron-import-images.php / cron-daily-update.php).
-// Da sa otvorit priamo v prehliadaci (nie je viazany na CLI). Po vyrieseni
-// problemu tento subor zmazat - nic tajne nevypisuje, ale netreba ho nechavat
-// verejne dostupny naveky.
+// Da sa otvorit priamo v prehliadaci aj spustit ako Websupport naplanovana
+// uloha typu "Navsteva URL adresy" (?token=CRON_SECRET) - takto sa da priamo
+// porovnat, ci k rozdielu v pripojeni naozaj dochadza medzi beznou HTTP
+// navstevou a CRON dispecerom. Po vyrieseni problemu tento subor zmazat a
+// zaznam preň odstranit z .htaccess.
 
 require_once __DIR__ . '/../config.php';
 
 header('Content-Type: text/plain; charset=utf-8');
+
+$token = $_GET['token'] ?? '';
+if (!defined('CRON_SECRET') || CRON_SECRET === '' || !hash_equals(CRON_SECRET, $token)) {
+    http_response_code(403);
+    echo "Forbidden\n";
+    exit;
+}
 
 $host = parse_url(MRP_API_URL, PHP_URL_HOST);
 $port = parse_url(MRP_API_URL, PHP_URL_PORT) ?: 80;
