@@ -61,19 +61,19 @@
                     <h4>Na stiahnutie</h4>
                     <ul>
                         <li>
-                            <a href="/docs/formular-odstupenie-od-zmluvy.pdf" target="_blank">
+                            <a href="/docs/formular-odstupenie-od-zmluvy.pdf?v=5c33e65" target="_blank">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                                 Odstúpenie od zmluvy
                             </a>
                         </li>
                         <li>
-                            <a href="/docs/reklamacny-formular.pdf" target="_blank">
+                            <a href="/docs/reklamacny-formular.pdf?v=5c33e65" target="_blank">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                                 Reklamačný formulár
                             </a>
                         </li>
                         <li>
-                            <a href="/docs/protokol-o-prijati-reklamacie.pdf" target="_blank">
+                            <a href="/docs/protokol-o-prijati-reklamacie.pdf?v=5c33e65" target="_blank">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                                 Protokol o reklamácii
                             </a>
