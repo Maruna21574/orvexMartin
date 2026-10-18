@@ -16,6 +16,42 @@ if ($categoryFilter !== '') {
 
 $products = getProducts($filters);
 
+$priceValues = [];
+foreach ($products as $product) {
+    if (isset($product['price_vat']) && is_numeric($product['price_vat']) && (float) $product['price_vat'] > 0) {
+        $priceValues[] = (float) $product['price_vat'];
+    }
+}
+
+$priceMin = $priceValues !== [] ? (int) floor(min($priceValues)) : 0;
+$priceMax = $priceValues !== [] ? (int) ceil(max($priceValues)) : 100;
+if ($priceMax <= $priceMin) {
+    $priceMax = $priceMin + 1;
+}
+
+$requestedPriceFrom = $_GET['cena_od'] ?? null;
+$requestedPriceTo = $_GET['cena_do'] ?? null;
+$priceFrom = is_numeric($requestedPriceFrom) ? (float) $requestedPriceFrom : $priceMin;
+$priceTo = is_numeric($requestedPriceTo) ? (float) $requestedPriceTo : $priceMax;
+$priceFrom = max($priceMin, min($priceMax, $priceFrom));
+$priceTo = max($priceMin, min($priceMax, $priceTo));
+if ($priceFrom > $priceTo) {
+    [$priceFrom, $priceTo] = [$priceTo, $priceFrom];
+}
+
+$priceFilterActive = $requestedPriceFrom !== null || $requestedPriceTo !== null;
+$hasActiveFilters = $search !== '' || $categoryFilter !== '' || $priceFilterActive;
+if ($priceFilterActive) {
+    $products = array_values(array_filter($products, static function (array $product) use ($priceFrom, $priceTo): bool {
+        if (!isset($product['price_vat']) || !is_numeric($product['price_vat'])) {
+            return false;
+        }
+
+        $price = (float) $product['price_vat'];
+        return $price >= $priceFrom && $price <= $priceTo;
+    }));
+}
+
 $sortOptions = [
     '' => 'Predvolené',
     'name-asc' => 'Názov A-Z',
@@ -40,14 +76,18 @@ if ($sort !== '') {
 $categories = getCategories();
 
 $activeCategoryName = '';
+$activeCategoryIndex = -1;
 if ($categoryFilter) {
-    foreach ($categories as $cat) {
+    foreach ($categories as $index => $cat) {
         if ($cat['id'] === $categoryFilter) {
             $activeCategoryName = $cat['name'];
+            $activeCategoryIndex = $index;
             break;
         }
     }
 }
+$categoryLimit = 6;
+$showAllCategories = $activeCategoryIndex >= $categoryLimit;
 ?>
 
 <section class="page-header">
@@ -93,18 +133,41 @@ if ($categoryFilter) {
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                             </button>
                         </div>
+                        <?php if ($categoryFilter !== ''): ?>
+                            <input type="hidden" name="kategoria" value="<?= e($categoryFilter) ?>">
+                        <?php endif; ?>
+
+                        <div class="filter-group filter-group--price">
+                            <h4>Cena s DPH</h4>
+                            <div class="price-range" data-price-range data-min="<?= $priceMin ?>" data-max="<?= $priceMax ?>">
+                                <div class="price-range__values">
+                                    <span data-price-from><?= e(formatPrice($priceFrom)) ?></span>
+                                    <span aria-hidden="true">–</span>
+                                    <span data-price-to><?= e(formatPrice($priceTo)) ?></span>
+                                </div>
+                                <div class="price-range__controls">
+                                    <div class="price-range__track"><span data-price-fill></span></div>
+                                    <input type="range" id="priceFrom" name="cena_od" min="<?= $priceMin ?>" max="<?= $priceMax ?>" step="1" value="<?= e((string) round($priceFrom)) ?>" aria-label="Minimálna cena">
+                                    <input type="range" id="priceTo" name="cena_do" min="<?= $priceMin ?>" max="<?= $priceMax ?>" step="1" value="<?= e((string) round($priceTo)) ?>" aria-label="Maximálna cena">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn--primary btn--sm price-range__submit">Použiť cenu</button>
+                        </div>
+                        <?php if ($hasActiveFilters): ?>
+                            <a href="/produkty" class="filter-reset-all">Zrušiť všetky filtre</a>
+                        <?php endif; ?>
                     </form>
 
                     <div class="filter-group">
                         <h4>Kategórie</h4>
-                        <ul class="filter-list">
+                        <ul class="filter-list filter-list--collapsible<?= $showAllCategories ? ' is-expanded' : '' ?>">
                             <li>
                                 <a href="/produkty" class="<?= $categoryFilter === '' ? 'active' : '' ?>">
                                     Všetky kategórie
                                 </a>
                             </li>
-                            <?php foreach ($categories as $cat): ?>
-                                <li>
+                            <?php foreach ($categories as $index => $cat): ?>
+                                <li class="<?= $index >= $categoryLimit && !$showAllCategories ? 'filter-list__extra' : '' ?>">
                                     <a href="/produkty?kategoria=<?= e($cat['id']) ?>"
                                        class="<?= $categoryFilter === $cat['id'] ? 'active' : '' ?>">
                                         <?= e($cat['name']) ?>
@@ -113,6 +176,17 @@ if ($categoryFilter) {
                                 </li>
                             <?php endforeach; ?>
                         </ul>
+                        <?php if (count($categories) > $categoryLimit): ?>
+                            <button type="button"
+                                    class="filter-category-toggle"
+                                    data-category-toggle
+                                    data-label-more="Zobraziť všetky kategórie"
+                                    data-label-less="Zobraziť menej"
+                                    aria-expanded="<?= $showAllCategories ? 'true' : 'false' ?>">
+                                <span><?= $showAllCategories ? 'Zobraziť menej' : 'Zobraziť všetky kategórie' ?></span>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                            </button>
+                        <?php endif; ?>
                     </div>
                 </div>
             </aside>
@@ -120,7 +194,7 @@ if ($categoryFilter) {
             <div class="products-main">
                 <div class="products-toolbar">
                     <div class="products-toolbar__left">
-                        <button class="btn btn--outline btn--sm btn--filter" id="filterToggle">
+                        <button type="button" class="btn btn--outline btn--sm btn--filter" id="filterToggle" aria-controls="filterSidebar">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/></svg>
                             Filtre
                         </button>
@@ -140,8 +214,13 @@ if ($categoryFilter) {
                     <div class="empty-state">
                         <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                         <h3>Žiadne produkty</h3>
-                        <p>Pre zadané kritériá sme nenašli žiadne produkty.</p>
-                        <a href="/produkty" class="btn btn--primary">Zobraziť všetky produkty</a>
+                        <?php if ($hasActiveFilters): ?>
+                            <p>Pre zadané filtre sme nenašli žiadne produkty. Skúste upraviť cenu alebo zrušiť všetky filtre.</p>
+                            <a href="/produkty" class="btn btn--primary">Zrušiť všetky filtre</a>
+                        <?php else: ?>
+                            <p>Pre zadané kritériá sme nenašli žiadne produkty.</p>
+                            <a href="/produkty" class="btn btn--primary">Zobraziť všetky produkty</a>
+                        <?php endif; ?>
                     </div>
                 <?php else: ?>
                     <div class="products-grid">
@@ -175,8 +254,10 @@ if ($categoryFilter) {
                                                 data-name="<?= e($product['name']) ?>"
                                                 data-price="<?= $product['price_vat'] ?>"
                                                 data-image="<?= e($product['image']) ?>"
-                                                data-sku="<?= e($product['sku']) ?>">
+                                                data-sku="<?= e($product['sku']) ?>"
+                                                aria-label="Pridať do košíka">
                                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                                            <span>Pridať</span>
                                         </button>
                                     <?php else: ?>
                                         <div class="product-card__price">

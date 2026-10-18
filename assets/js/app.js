@@ -5,6 +5,8 @@ document.addEventListener('DOMContentLoaded', function () {
     initCartPage();
     initProductGallery();
     initFilterSidebar();
+    initPriceRange();
+    initCategoryFilterToggle();
     initOrderForm();
     initContactForm();
     initLiveSearch();
@@ -14,6 +16,8 @@ document.addEventListener('DOMContentLoaded', function () {
     initHeaderScroll();
     initCardTilt();
     initHeroGlow();
+    initHeroShowcase();
+    initProductsSlider();
     initCookieConsent();
 });
 
@@ -24,11 +28,39 @@ function initMobileMenu() {
     const searchToggle = document.getElementById('searchToggle');
     const searchWrap = document.getElementById('headerSearchWrap');
     const searchInput = document.getElementById('headerSearchInput');
+    const submenuToggles = document.querySelectorAll('[data-menu-submenu-toggle]');
+
+    function closeSubmenus() {
+        document.querySelectorAll('.header__menu-item--dropdown.is-open').forEach(function (item) {
+            item.classList.remove('is-open');
+            var toggle = item.querySelector('[data-menu-submenu-toggle]');
+            var link = item.querySelector('.header__menu-link-wrap > a');
+            if (toggle) toggle.setAttribute('aria-expanded', 'false');
+            if (link) link.setAttribute('aria-expanded', 'false');
+        });
+    }
+
+    submenuToggles.forEach(function (toggle) {
+        toggle.addEventListener('click', function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            var item = toggle.closest('.header__menu-item--dropdown');
+            if (!item) return;
+
+            var isOpen = item.classList.toggle('is-open');
+            toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+
+            var link = item.querySelector('.header__menu-link-wrap > a');
+            if (link) link.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        });
+    });
 
     if (hamburger && menu) {
         hamburger.addEventListener('click', function () {
             hamburger.classList.toggle('active');
             menu.classList.toggle('open');
+            if (!menu.classList.contains('open')) closeSubmenus();
             if (searchWrap) searchWrap.classList.remove('open');
         });
     }
@@ -40,6 +72,7 @@ function initMobileMenu() {
                 searchInput.focus();
                 if (hamburger) hamburger.classList.remove('active');
                 if (menu) menu.classList.remove('open');
+                closeSubmenus();
             }
         });
     }
@@ -48,6 +81,7 @@ function initMobileMenu() {
         if (hamburger && menu && !hamburger.contains(e.target) && !menu.contains(e.target)) {
             hamburger.classList.remove('active');
             menu.classList.remove('open');
+            closeSubmenus();
         }
         if (searchToggle && searchWrap && !searchToggle.contains(e.target) && !searchWrap.contains(e.target)) {
             searchWrap.classList.remove('open');
@@ -366,6 +400,79 @@ function initFilterSidebar() {
     if (overlay) overlay.addEventListener('click', closeSidebar);
 }
 
+// === PRICE RANGE FILTER ===
+function initPriceRange() {
+    var range = document.querySelector('[data-price-range]');
+    if (!range) return;
+
+    var fromInput = range.querySelector('#priceFrom');
+    var toInput = range.querySelector('#priceTo');
+    var fill = range.querySelector('[data-price-fill]');
+    var fromLabel = range.querySelector('[data-price-from]');
+    var toLabel = range.querySelector('[data-price-to]');
+    if (!fromInput || !toInput || !fill) return;
+
+    var min = Number(range.dataset.min) || 0;
+    var max = Number(range.dataset.max) || 1;
+    var step = Number(fromInput.step) || 1;
+    var formatter = new Intl.NumberFormat('sk-SK', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    });
+
+    function formatPrice(value) {
+        return formatter.format(value) + ' €';
+    }
+
+    function update(source) {
+        var from = Number(fromInput.value);
+        var to = Number(toInput.value);
+
+        if (source === fromInput && from > to - step) {
+            fromInput.value = String(Math.max(min, to - step));
+        }
+        if (source === toInput && to < from + step) {
+            toInput.value = String(Math.min(max, from + step));
+        }
+
+        from = Number(fromInput.value);
+        to = Number(toInput.value);
+        var span = Math.max(1, max - min);
+        var fromPercent = ((from - min) / span) * 100;
+        var toPercent = ((to - min) / span) * 100;
+
+        fill.style.left = fromPercent + '%';
+        fill.style.width = Math.max(0, toPercent - fromPercent) + '%';
+        if (fromLabel) fromLabel.textContent = formatPrice(from);
+        if (toLabel) toLabel.textContent = formatPrice(to);
+    }
+
+    fromInput.addEventListener('input', function () {
+        update(fromInput);
+    });
+    toInput.addEventListener('input', function () {
+        update(toInput);
+    });
+    update();
+}
+
+// === CATEGORY FILTER TOGGLE ===
+function initCategoryFilterToggle() {
+    document.querySelectorAll('[data-category-toggle]').forEach(function (toggle) {
+        var list = toggle.previousElementSibling;
+        var label = toggle.querySelector('span');
+        if (!list || !label) return;
+
+        toggle.addEventListener('click', function () {
+            var isExpanded = list.classList.toggle('is-expanded');
+            toggle.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+            label.textContent = isExpanded
+                ? toggle.dataset.labelLess
+                : toggle.dataset.labelMore;
+        });
+    });
+}
+
 // === ORDER FORM VALIDATION ===
 function initOrderForm() {
     var form = document.getElementById('orderForm');
@@ -522,6 +629,149 @@ function initHeroGlow() {
     hero.addEventListener('mouseleave', function () {
         glow.style.opacity = '0';
     });
+}
+
+// === HERO SHOWCASE ===
+function initHeroShowcase() {
+    var showcase = document.querySelector('[data-hero-showcase]');
+    if (!showcase) return;
+
+    var slides = showcase.querySelectorAll('[data-hero-slide]');
+    var dots = showcase.querySelectorAll('[data-hero-go]');
+    var currentLabel = showcase.querySelector('[data-hero-current]');
+    var current = 0;
+    var timer;
+
+    if (!slides.length) return;
+
+    function setSlide(index) {
+        current = (index + slides.length) % slides.length;
+
+        slides.forEach(function (slide, i) {
+            slide.classList.toggle('is-active', i === current);
+        });
+
+        dots.forEach(function (dot, i) {
+            dot.classList.toggle('is-active', i === current);
+            dot.setAttribute('aria-current', i === current ? 'true' : 'false');
+        });
+
+        if (currentLabel) {
+            currentLabel.textContent = String(current + 1).padStart(2, '0');
+        }
+    }
+
+    function startTimer() {
+        window.clearInterval(timer);
+        timer = window.setInterval(function () {
+            setSlide(current + 1);
+        }, 6000);
+    }
+
+    var prev = showcase.querySelector('[data-hero-prev]');
+    var next = showcase.querySelector('[data-hero-next]');
+
+    if (prev) prev.addEventListener('click', function () {
+        setSlide(current - 1);
+        startTimer();
+    });
+
+    if (next) next.addEventListener('click', function () {
+        setSlide(current + 1);
+        startTimer();
+    });
+
+    dots.forEach(function (dot) {
+        dot.addEventListener('click', function () {
+            setSlide(Number(dot.getAttribute('data-hero-go')) || 0);
+            startTimer();
+        });
+    });
+
+    showcase.addEventListener('mouseenter', function () {
+        window.clearInterval(timer);
+    });
+
+    showcase.addEventListener('mouseleave', startTimer);
+    showcase.addEventListener('focusin', function () {
+        window.clearInterval(timer);
+    });
+    showcase.addEventListener('focusout', function (event) {
+        if (!showcase.contains(event.relatedTarget)) startTimer();
+    });
+
+    setSlide(0);
+    startTimer();
+}
+
+// === HOMEPAGE PRODUCTS SLIDER ===
+function initProductsSlider() {
+    var slider = document.querySelector('[data-products-slider]');
+    var track = slider ? slider.querySelector('[data-products-track]') : null;
+    if (!slider || !track) return;
+
+    var cards = track.querySelectorAll('.product-card');
+    var prev = slider.querySelector('[data-products-prev]');
+    var next = slider.querySelector('[data-products-next]');
+    var timer;
+
+    if (cards.length < 2) return;
+
+    function getStep() {
+        var gap = parseFloat(window.getComputedStyle(track).gap) || 24;
+        return cards[0].getBoundingClientRect().width + gap;
+    }
+
+    function scrollNext() {
+        var maxScroll = track.scrollWidth - track.clientWidth;
+        var nextPosition = track.scrollLeft + getStep();
+
+        if (nextPosition >= maxScroll - 4) {
+            track.scrollTo({ left: 0, behavior: 'smooth' });
+        } else {
+            track.scrollBy({ left: getStep(), behavior: 'smooth' });
+        }
+    }
+
+    function scrollPrev() {
+        if (track.scrollLeft <= 4) {
+            track.scrollTo({
+                left: Math.max(0, track.scrollWidth - track.clientWidth),
+                behavior: 'smooth'
+            });
+        } else {
+            track.scrollBy({ left: -getStep(), behavior: 'smooth' });
+        }
+    }
+
+    function startTimer() {
+        window.clearInterval(timer);
+        timer = window.setInterval(function () {
+            if (!document.hidden) scrollNext();
+        }, 6500);
+    }
+
+    if (prev) prev.addEventListener('click', function () {
+        scrollPrev();
+        startTimer();
+    });
+
+    if (next) next.addEventListener('click', function () {
+        scrollNext();
+        startTimer();
+    });
+
+    slider.addEventListener('mouseenter', function () {
+        window.clearInterval(timer);
+    });
+
+    slider.addEventListener('mouseleave', startTimer);
+    slider.addEventListener('touchstart', function () {
+        window.clearInterval(timer);
+    }, { passive: true });
+    slider.addEventListener('touchend', startTimer, { passive: true });
+
+    startTimer();
 }
 
 // === HEADER SCROLL ===

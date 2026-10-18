@@ -131,6 +131,43 @@ require_once 'includes/header.php';
     </div>
 </section>
 
+<section class="section home-story">
+    <div class="container home-story__grid">
+        <div class="home-story__media">
+            <img src="/assets/images/hero-bg.jpg" alt="Európsky les pri horskom jazere" loading="lazy">
+        </div>
+        <div class="home-story__content">
+            <span class="section__eyebrow">Viac než e-shop</span>
+            <h2>Riešenia pre prácu v lese na jednom mieste</h2>
+            <p>Pomáhame profesionálom vybrať techniku, diely a vybavenie podľa skutočného spôsobu použitia. Od bežnej náhrady až po riešenie pre náročné podmienky.</p>
+            <div class="home-story__points">
+                <div class="home-story__point">
+                    <span class="home-story__point-icon">01</span>
+                    <div>
+                        <strong>Technika a príslušenstvo</strong>
+                        <span>Prehľad sortimentu pre lesné hospodárstvo.</span>
+                    </div>
+                </div>
+                <div class="home-story__point">
+                    <span class="home-story__point-icon">02</span>
+                    <div>
+                        <strong>Diely podľa katalógového čísla</strong>
+                        <span>Vyhľadajte vhodný diel rýchlo a presne.</span>
+                    </div>
+                </div>
+                <div class="home-story__point">
+                    <span class="home-story__point-icon">03</span>
+                    <div>
+                        <strong>Odborné poradenstvo</strong>
+                        <span>Keď si nie ste istí výberom, ozvite sa nám.</span>
+                    </div>
+                </div>
+            </div>
+            <a href="/produkty" class="btn btn--outline">Pozrieť produkty</a>
+        </div>
+    </div>
+</section>
+
 <?php
 $contactFormTitle = 'Zaujali sme vás?';
 $contactFormDesc = 'Napíšte nám a radi vám poradíme s výberom techniky alebo zodpovieme vaše otázky.';

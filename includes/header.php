@@ -1,4 +1,10 @@
 <?php require_once __DIR__ . '/../config.php'; ?>
+<?php
+$headerCategories = array_values(array_filter(
+    getCategories(),
+    static fn(array $category): bool => !empty($category['id']) && !empty($category['name'])
+));
+?>
 <!DOCTYPE html>
 <html lang="sk">
 <head>
@@ -19,6 +25,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/assets/css/style.css?v=<?= filemtime(__DIR__ . '/../assets/css/style.css') ?>">
+    <link rel="stylesheet" href="/assets/css/home-slider.css?v=<?= filemtime(__DIR__ . '/../assets/css/home-slider.css') ?>">
 </head>
 <body>
     <header class="header" id="siteHeader">
@@ -46,7 +53,27 @@
                     <ul class="header__menu" id="mainMenu">
                         <li><a href="/" class="<?= isActivePage('index') ?>">Domov</a></li>
                         <li><a href="/o-nas" class="<?= isActivePage('o-nas') ?>">O nás</a></li>
-                        <li><a href="/produkty" class="<?= isActivePage('produkty') ?>">Produkty</a></li>
+                        <li class="header__menu-item--dropdown<?= isActivePage('produkty') ? ' is-active' : '' ?>">
+                            <div class="header__menu-link-wrap">
+                                <a href="/produkty" class="<?= isActivePage('produkty') ?>" aria-haspopup="true" aria-expanded="false">Produkty</a>
+                                <button type="button" class="header__submenu-toggle" data-menu-submenu-toggle aria-label="Zobraziť kategórie produktov" aria-expanded="false">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                                </button>
+                            </div>
+                            <ul class="header__submenu" aria-label="Kategórie produktov">
+                                <li><a href="/produkty">Všetky produkty</a></li>
+                                <?php foreach ($headerCategories as $category): ?>
+                                    <li>
+                                        <a href="/produkty?kategoria=<?= e($category['id']) ?>">
+                                            <span><?= e($category['name']) ?></span>
+                                            <?php if (!empty($category['count'])): ?>
+                                                <small><?= (int) $category['count'] ?></small>
+                                            <?php endif; ?>
+                                        </a>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </li>
                         <li><a href="/kontakt" class="<?= isActivePage('kontakt') ?>">Kontakt</a></li>
                         <li><a href="/kosik" class="<?= isActivePage('kosik') ?>">Košík</a></li>
                     </ul>
