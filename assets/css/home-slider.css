@@ -51,7 +51,7 @@
     border-bottom: 0;
     background:
         linear-gradient(90deg, rgba(15, 61, 34, .97) 0%, rgba(15, 61, 34, .88) 52%, rgba(15, 61, 34, .62) 100%),
-        url('/assets/images/hero-bg.jpg') center / cover no-repeat;
+        var(--ph-img, url('/assets/images/hero-bg.jpg')) center / cover no-repeat;
     color: #fff;
 }
 
@@ -593,3 +593,27 @@
     }
 }
 
+
+.page-header--photo {
+    padding: 78px 0 72px;
+    background:
+        linear-gradient(90deg, rgba(8, 36, 20, .94) 0%, rgba(12, 52, 30, .74) 42%, rgba(12, 52, 30, .12) 100%),
+        var(--ph-img) center / cover no-repeat;
+}
+
+.page-header--photo::after {
+    display: none;
+}
+
+@media (max-width: 600px) {
+    .page-header--photo {
+        padding: 50px 0 46px;
+        background:
+            linear-gradient(rgba(8, 36, 20, .86), rgba(8, 36, 20, .86)),
+            var(--ph-img) center / cover no-repeat;
+    }
+}
+
+.page-header--photo {
+    background-position: center 62%;
+}

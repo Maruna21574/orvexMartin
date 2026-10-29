@@ -22,6 +22,9 @@ RewriteRule ^sitemap\.xml$ /sitemap.php [L]
 # Pekne URL produktov: /produkt/kryt-ventilatora-2 -> produkt.php?id=2 (id je za poslednou pomlckou)
 RewriteRule ^produkt/.*-([A-Za-z0-9]+)$ /produkt.php?id=$1 [L,QSA]
 
+# Podstranky typov retazi VERIGA: /snehove-retaze-veriga/osobne-auta -> snehove-retaze-veriga-typ.php?slug=osobne-auta
+RewriteRule ^snehove-retaze-veriga/([a-z0-9-]+)$ /snehove-retaze-veriga-typ.php?slug=$1 [L,QSA]
+
 # Cistes URL bez pripony .php (napr. /produkty namiesto /produkty.php) -
 # interne sa dorata .php a obsluzi sa dany subor, v adresnom riadku zostava
 # cista URL. $_SERVER['SCRIPT_NAME'] zostava povodny .php nazov, takze
@@ -50,7 +53,7 @@ ErrorDocument 404 /404.php
 </FilesMatch>
 
 # Allow PHP files in root and api directory
-<FilesMatch "^(index|produkty|produkt|kosik|objednavka|kontakt|o-nas|obchodne-podmienky|reklamacny-poriadok|ochrana-osobnych-udajov|404|ajax|sitemap)\.php$">
+<FilesMatch "^(index|produkty|produkt|kosik|objednavka|kontakt|o-nas|obchodne-podmienky|reklamacny-poriadok|ochrana-osobnych-udajov|404|ajax|sitemap|snehove-retaze-veriga|snehove-retaze-veriga-typ)\.php$">
     <IfModule mod_authz_core.c>
         Require all granted
     </IfModule>

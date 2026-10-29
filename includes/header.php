@@ -20,14 +20,14 @@ $headerCategories = array_values(array_filter(
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= e($pageTitle ?? 'ORVEX Martin') ?> | <?= e(SITE_NAME) ?></title>
-    <meta name="description" content="<?= e($pageDescription ?? 'Predaj LKT a náhradné diely LKT (NDLKT) od roku 1991. Lesná kolesová technika, snehové reťaze, hydraulické čerpadlá. ORVEX MT s.r.o.') ?>">
+    <meta name="description" content="<?= e($pageDescription ?? 'Náhradné diely na LKT (NDLKT) a predaj LKT od roku 1991. Lesná kolesová technika, snehové reťaze, hydraulické čerpadlá. ORVEX MT s.r.o.') ?>">
     <?php if (!empty($pageNoindex)): ?><meta name="robots" content="noindex,follow">
     <?php endif; ?>
     <link rel="canonical" href="<?= e($canonicalUrl) ?>">
     <meta property="og:type" content="<?= isset($pageProduct) ? 'product' : 'website' ?>">
     <meta property="og:site_name" content="<?= e(SITE_NAME) ?>">
     <meta property="og:title" content="<?= e($pageTitle ?? 'ORVEX Martin') ?>">
-    <meta property="og:description" content="<?= e($pageDescription ?? 'Predaj LKT a náhradné diely LKT (NDLKT) od roku 1991. Lesná kolesová technika, snehové reťaze, hydraulické čerpadlá. ORVEX MT s.r.o.') ?>">
+    <meta property="og:description" content="<?= e($pageDescription ?? 'Náhradné diely na LKT (NDLKT) a predaj LKT od roku 1991. Lesná kolesová technika, snehové reťaze, hydraulické čerpadlá. ORVEX MT s.r.o.') ?>">
     <meta property="og:url" content="<?= e($canonicalUrl) ?>">
     <meta property="og:image" content="<?= e($pageImage ?? SITE_URL . '/assets/images/orvex_logo_green.png') ?>">
     <script type="application/ld+json"><?= json_encode([
@@ -59,11 +59,12 @@ $headerCategories = array_values(array_filter(
     <link rel="stylesheet" href="/assets/css/style.css?v=<?= filemtime(__DIR__ . '/../assets/css/style.css') ?>">
     <link rel="stylesheet" href="/assets/css/home-slider.css?v=<?= filemtime(__DIR__ . '/../assets/css/home-slider.css') ?>">
 </head>
-<body>
+<body<?= !empty($bodyClass) ? ' class="' . e($bodyClass) . '"' : '' ?>>
     <header class="header" id="siteHeader">
         <div class="header__top">
             <div class="container">
                 <div class="header__top-inner">
+                    <a href="/snehove-retaze-veriga" class="header__veriga">Zástupca VERIGA pre Slovensko &ndash; snehové reťaze</a>
                     <span class="header__contact">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                         <?= e(COMPANY_PHONE) ?>
@@ -106,6 +107,7 @@ $headerCategories = array_values(array_filter(
                                 <?php endforeach; ?>
                             </ul>
                         </li>
+                        <li><a href="/snehove-retaze-veriga" class="header__menu-veriga <?= isActivePage('snehove-retaze-veriga') ?: isActivePage('snehove-retaze-veriga-typ') ?>">Reťaze VERIGA</a></li>
                         <li><a href="/kontakt" class="<?= isActivePage('kontakt') ?>">Kontakt</a></li>
                         <li><a href="/kosik" class="<?= isActivePage('kosik') ?>">Košík</a></li>
                     </ul>

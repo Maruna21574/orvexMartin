@@ -9,6 +9,8 @@ document.addEventListener('DOMContentLoaded', function () {
     initCategoryFilterToggle();
     initOrderForm();
     initContactForm();
+    initVerigaForm();
+    initVerigaPopup();
     initLiveSearch();
     initBackToTop();
     initStickyCta();
@@ -17,6 +19,8 @@ document.addEventListener('DOMContentLoaded', function () {
     initCardTilt();
     initHeroGlow();
     initHeroShowcase();
+    initHeroSlider();
+    initSmoothHashArrival();
     initProductsSlider();
     initCookieConsent();
 });
@@ -1019,4 +1023,262 @@ function initCookieConsent() {
     });
 
     if (fab) fab.addEventListener('click', openModal);
+}
+
+
+// === VERIGA: DOPYTOVY FORMULAR ===
+function initVerigaForm() {
+    var form = document.getElementById('verigaForm');
+    if (!form) return;
+
+    // Kliknutie na dlazdicu typu predvyplni typ retazi vo formulari.
+    document.querySelectorAll('[data-veriga-type]').forEach(function (tile) {
+        tile.addEventListener('click', function () {
+            var radio = form.querySelector('input[name="type"][value="' + tile.getAttribute('data-veriga-type') + '"]');
+            if (radio) radio.checked = true;
+        });
+    });
+
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        var hasError = false;
+        form.querySelectorAll('.error').forEach(function (el) { el.classList.remove('error'); });
+
+        form.querySelectorAll('input[required]:not([type="radio"]):not([type="checkbox"]), textarea[required]').forEach(function (field) {
+            if (!field.value.trim()) {
+                field.classList.add('error');
+                hasError = true;
+            }
+        });
+
+        var email = form.querySelector('#vf_email');
+        if (email && email.value && !isValidEmail(email.value)) {
+            email.classList.add('error');
+            hasError = true;
+        }
+
+        if (!form.querySelector('input[name="type"]:checked')) {
+            form.querySelector('.vform-types').classList.add('error');
+            hasError = true;
+        }
+
+        var consent = form.querySelector('input[name="consent"]');
+        if (!consent.checked) {
+            hasError = true;
+            showToast('Potvrďte súhlas so spracovaním osobných údajov');
+        }
+
+        if (hasError) {
+            var firstError = form.querySelector('.error');
+            if (firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            showToast('Vyplňte všetky povinné polia');
+            return;
+        }
+
+        var btn = document.getElementById('verigaSubmitBtn');
+        var origText = btn.innerHTML;
+        btn.disabled = true;
+        btn.textContent = 'Odosielam...';
+
+        var formData = new FormData(form);
+        formData.append('action', 'veriga_inquiry');
+
+        fetch('/api/ajax.php', { method: 'POST', body: formData })
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                if (data.success) {
+                    form.innerHTML = '<div class="cform-success"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><h3>Dopyt bol odoslaný</h3><p>' + String(data.message).replace(/[escapeHtml(data.message)<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }) + '</p></div>';
+                } else {
+                    showToast(data.message || 'Chyba pri odosielaní');
+                    btn.disabled = false;
+                    btn.innerHTML = origText;
+                }
+            })
+            .catch(function () {
+                showToast('Chyba pri odosielaní formulára');
+                btn.disabled = false;
+                btn.innerHTML = origText;
+            });
+    });
+}
+
+// === VERIGA: MALE OKNO (NIE CELOOBRAZOVKOVE - Google penalizuje rusive interstitialy) ===
+function initVerigaPopup() {
+    var popup = document.getElementById('verigaPopup');
+    if (!popup) return;
+
+    var KEY = 'orvex_veriga_popup';
+    var HIDE_DAYS = 14;
+
+    try {
+        var last = parseInt(localStorage.getItem(KEY), 10);
+        if (last && Date.now() - last < HIDE_DAYS * 86400000) return;
+    } catch (e) { /* localStorage nedostupny - okno sa ukaze */ }
+
+    function dismiss() {
+        popup.hidden = true;
+        try { localStorage.setItem(KEY, String(Date.now())); } catch (e) { /* ignore */ }
+    }
+
+    document.getElementById('verigaPopupClose').addEventListener('click', dismiss);
+    popup.querySelector('a').addEventListener('click', dismiss);
+
+    // Ukaz az ked sa zavrie cookie lista, aby sa okna neprekryvali.
+    function show() {
+        var banner = document.getElementById('cookieBanner');
+        if (banner && !banner.hidden) {
+            document.addEventListener('cookieconsentchange', function () { setTimeout(show, 1500); }, { once: true });
+            return;
+        }
+        popup.hidden = false;
+    }
+    setTimeout(show, 6000);
+}
+
+// === HOMEPAGE: SLIDER CELYCH SEKCII (hero) ===
+function initHeroSlider() {
+    var root = document.querySelector('[data-hslider]');
+    if (!root) return;
+
+    var track = root.querySelector('[data-hslider-track]');
+    var slides = root.querySelectorAll('[data-hslide]');
+    var dots = root.querySelectorAll('[data-hslider-go]');
+    var total = slides.length;
+    if (total < 2) return;
+
+    var index = 0;
+    var timer = null;
+    var AUTOPLAY_MS = 8000;
+    var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function render() {
+        track.style.transform = 'translateX(' + (-index * 100) + '%)';
+        slides.forEach(function (slide, i) {
+            var active = i === index;
+            slide.setAttribute('aria-hidden', active ? 'false' : 'true');
+            // inert = neaktivny slide sa nedostane do tab-poradia ani ku čitačkám obrazovky
+            if (active) slide.removeAttribute('inert'); else slide.setAttribute('inert', '');
+        });
+        dots.forEach(function (dot, i) {
+            dot.classList.toggle('is-active', i === index);
+            if (i === index) dot.setAttribute('aria-current', 'true'); else dot.removeAttribute('aria-current');
+        });
+    }
+
+    function go(i) {
+        index = (i + total) % total;
+        render();
+    }
+
+    function stop() {
+        if (timer) { clearInterval(timer); timer = null; }
+    }
+
+    function start() {
+        if (reduceMotion || timer) return;
+        timer = setInterval(function () { go(index + 1); }, AUTOPLAY_MS);
+    }
+
+    root.querySelector('[data-hslider-prev]').addEventListener('click', function () { go(index - 1); stop(); });
+    root.querySelector('[data-hslider-next]').addEventListener('click', function () { go(index + 1); stop(); });
+    dots.forEach(function (dot) {
+        dot.addEventListener('click', function () {
+            go(Number(dot.getAttribute('data-hslider-go')) || 0);
+            stop();
+        });
+    });
+
+    // Pauza pri prejdení myšou / zameraní klávesnicou, aby sa slide nemenil pod rukami.
+    root.addEventListener('mouseenter', stop);
+    root.addEventListener('mouseleave', start);
+    root.addEventListener('focusin', stop);
+    root.addEventListener('focusout', start);
+    document.addEventListener('visibilitychange', function () {
+        if (document.hidden) stop(); else start();
+    });
+
+    // Swipe na dotyku
+    var startX = null;
+    root.addEventListener('touchstart', function (e) { startX = e.touches[0].clientX; stop(); }, { passive: true });
+    root.addEventListener('touchend', function (e) {
+        if (startX === null) return;
+        var dx = e.changedTouches[0].clientX - startX;
+        startX = null;
+        if (Math.abs(dx) > 50) go(dx < 0 ? index + 1 : index - 1);
+    }, { passive: true });
+
+    root.addEventListener('keydown', function (e) {
+        if (e.key === 'ArrowLeft') go(index - 1);
+        if (e.key === 'ArrowRight') go(index + 1);
+    });
+
+    render();
+    start();
+}
+
+// === PLYNULY PRICHOD NA SEKCIU INEJ STRANKY ===
+// Odkaz s data-goto="id-sekcie" otvori stranku BEZ #hash (prehliadac by inak najprv skocil na sekciu a
+// az potom by sa nasa animacia rozbehla - posek/sekanie). Id si zapamata a po nacitani stranky sa k sekcii
+// plynule doroluje od vrchu. Bez JS odkaz jednoducho otvori stranku.
+function initSmoothHashArrival() {
+    var HEADER_OFFSET = 100;
+    var KEY = 'orvex_goto';
+
+    function easeInOutCubic(t) {
+        return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    }
+
+    // Scroll s animaciou. Ciel sa prepocitava v kazdom kroku, takze neprekazaju dodatocne nacitane obrazky.
+    function scrollToTarget(target) {
+        var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var targetY = function () {
+            return Math.max(0, target.getBoundingClientRect().top + window.pageYOffset - HEADER_OFFSET);
+        };
+        if (reduceMotion) { window.scrollTo({ top: targetY(), behavior: 'instant' }); return; }
+
+        var startY = window.pageYOffset;
+        var duration = Math.min(1400, Math.max(700, Math.abs(targetY() - startY) * 0.35));
+        var startTime = null;
+
+        function step(now) {
+            if (startTime === null) startTime = now;
+            var t = Math.min(1, (now - startTime) / duration);
+            var y = startY + (targetY() - startY) * easeInOutCubic(t);
+            window.scrollTo({ top: y, behavior: 'instant' });
+            if (t < 1) requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+    }
+
+    // 1) klik na odkaz s data-goto -> zapamataj cielovu sekciu
+    document.addEventListener('click', function (e) {
+        var link = e.target.closest('a[data-goto]');
+        if (!link) return;
+        try { sessionStorage.setItem(KEY, link.getAttribute('data-goto')); } catch (err) { /* ignore */ }
+    });
+
+    // 2) po nacitani stranky: zapamatana sekcia, prip. klasicky #hash
+    var id = null;
+    try {
+        id = sessionStorage.getItem(KEY);
+        if (id) sessionStorage.removeItem(KEY);
+    } catch (err) { /* ignore */ }
+    var fromHash = false;
+    if (!id && window.location.hash.length > 1) { id = window.location.hash.slice(1); fromHash = true; }
+    if (!id) return;
+
+    var target = document.getElementById(id);
+    if (!target) return;
+
+    if (fromHash) {
+        // prehliadac uz skocil na #hash - vratime sa hore a doroluje sa plynulo
+        if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }
+
+    var go = function () { setTimeout(function () { scrollToTarget(target); }, 200); };
+    if (document.readyState === 'complete') go(); else window.addEventListener('load', go);
 }

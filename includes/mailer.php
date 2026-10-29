@@ -58,9 +58,12 @@ function sendHtmlEmail(string $to, string $subject, string $bodyHtml, ?string $r
  * odoslania sprava zapisuje priamo do schranky cez IMAP APPEND - to nie je
  * "odoslanie" v zmysle mail transportu, takze sa anti-loop ochrana neuplatni.
  */
-function appendToInbox(string $subject, string $bodyHtml): bool
+function appendToInbox(string $subject, string $bodyHtml, ?string $replyTo = null): bool
 {
     $rawMessage = "From: " . COMPANY_NAME . " <" . SMTP_USER . ">\r\n";
+    if ($replyTo !== null && filter_var($replyTo, FILTER_VALIDATE_EMAIL)) {
+        $rawMessage .= "Reply-To: " . $replyTo . "\r\n";
+    }
     $rawMessage .= "To: <" . SMTP_USER . ">\r\n";
     $rawMessage .= "Subject: =?UTF-8?B?" . base64_encode($subject) . "?=\r\n";
     $rawMessage .= "Date: " . date('r') . "\r\n";
@@ -251,7 +254,65 @@ function sendViaSmtp(string $to, string $rawMessage): bool
     return true;
 }
 
-function sendContactConfirmation(string $name, string $email, string $subject, string $message): void
+/**
+ * Texty e-mailov pre kontaktny formular (zakaznik + admin). Vracia [telo pre zakaznika, telo pre admina].
+ * Rovnaka struktura ako e-maily dopytu VERIGA (buildVerigaInquiryEmails), farby ORVEX.
+ */
+function buildContactEmails(string $name, string $email, string $phone, string $subjectText, string $message): array
+{
+    $accent = '#1a5632';
+    $h = static fn(string $s): string => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
+
+    $row = static function (string $label, string $valueHtml) use ($h): string {
+        return '<tr>'
+            . '<td style="padding:9px 0;border-bottom:1px solid #dfeae3;color:#6b7280;font-size:13px;width:140px;vertical-align:top;">' . $label . '</td>'
+            . '<td style="padding:9px 0;border-bottom:1px solid #dfeae3;color:#0f172a;font-size:14px;font-weight:600;">' . $valueHtml . '</td>'
+            . '</tr>';
+    };
+
+    $messageBox = '<div style="margin-top:18px;padding:14px 16px;background:#f8fafc;border-left:3px solid ' . $accent . ';border-radius:0 8px 8px 0;">'
+        . '<p style="margin:0 0 4px;font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;">Správa</p>'
+        . '<p style="margin:0;font-size:14px;color:#374151;line-height:1.6;white-space:pre-line;">' . $h($message) . '</p></div>';
+
+    $step = static fn(string $n, string $text): string =>
+        '<tr><td style="padding:6px 12px 6px 0;vertical-align:top;"><span style="display:inline-block;width:24px;height:24px;line-height:24px;text-align:center;border-radius:12px;background:' . $accent . ';color:#fff;font-size:12px;font-weight:700;">' . $n . '</span></td>'
+        . '<td style="padding:6px 0;font-size:14px;color:#374151;line-height:1.5;">' . $text . '</td></tr>';
+
+    $customer = '<h2 style="margin:0 0 8px;font-size:21px;color:#0f172a;">Ďakujeme za vašu správu, ' . $h($name) . '</h2>'
+        . '<p style="margin:0 0 22px;font-size:14px;color:#4b5563;line-height:1.6;">Prijali sme vašu správu a ozveme sa vám čo najskôr, zvyčajne do 24 hodín.</p>'
+        . '<div style="padding:18px 20px;background:#f0f7f3;border-radius:10px;">'
+        . '<p style="margin:0 0 6px;font-size:11px;color:' . $accent . ';text-transform:uppercase;letter-spacing:.08em;font-weight:700;">Vaša správa</p>'
+        . '<table role="presentation" style="width:100%;border-collapse:collapse;font-family:Arial,sans-serif;">'
+        . $row('Predmet', $h($subjectText))
+        . '</table></div>'
+        . $messageBox
+        . '<h3 style="margin:26px 0 8px;font-size:15px;color:#0f172a;">Čo bude nasledovať</h3>'
+        . '<table role="presentation" style="border-collapse:collapse;font-family:Arial,sans-serif;">'
+        . $step('1', 'Prečítame si vašu správu.')
+        . $step('2', 'Ozveme sa vám e-mailom alebo telefonicky.')
+        . '</table>'
+        . '<p style="margin:26px 0 0;font-size:13px;color:#6b7280;line-height:1.6;">Potrebujete poradiť hneď? Napíšte na <a href="mailto:' . COMPANY_EMAIL . '" style="color:' . $accent . ';">' . COMPANY_EMAIL . '</a> alebo zavolajte na <strong>' . COMPANY_PHONE . '</strong>.</p>';
+
+    $phoneHtml = $phone !== ''
+        ? '<a href="tel:' . $h(preg_replace('/[^0-9+]/', '', $phone)) . '" style="color:' . $accent . ';">' . $h($phone) . '</a>'
+        : '';
+
+    $admin = '<h2 style="margin:0 0 4px;font-size:21px;color:#0f172a;">Nová správa z kontaktného formulára</h2>'
+        . '<p style="margin:0 0 20px;font-size:13px;color:#6b7280;">' . date('d.m.Y H:i') . '</p>'
+        . '<div style="padding:18px 20px;background:#f0f7f3;border-radius:10px;">'
+        . '<table role="presentation" style="width:100%;border-collapse:collapse;font-family:Arial,sans-serif;">'
+        . $row('Predmet', $h($subjectText))
+        . $row('Meno', $h($name))
+        . $row('E-mail', '<a href="mailto:' . $h($email) . '" style="color:' . $accent . ';">' . $h($email) . '</a>')
+        . ($phoneHtml !== '' ? $row('Telefón', $phoneHtml) : '')
+        . '</table></div>'
+        . $messageBox
+        . '<p style="margin:24px 0 0;"><a href="mailto:' . $h($email) . '?subject=' . rawurlencode('Re: ' . $subjectText) . '" style="display:inline-block;background:' . $accent . ';color:#fff;text-decoration:none;padding:12px 26px;border-radius:8px;font-size:14px;font-weight:600;">Odpovedať zákazníkovi</a></p>';
+
+    return [$customer, $admin];
+}
+
+function sendContactConfirmation(string $name, string $email, string $subject, string $message, string $phone = ''): void
 {
     $subjectMap = [
         'dopyt' => 'Dopyt na produkt',
@@ -262,59 +323,13 @@ function sendContactConfirmation(string $name, string $email, string $subject, s
     ];
     $subjectText = $subjectMap[$subject] ?? 'Kontaktný formulár';
 
-    $customerBody = '
-        <h2 style="margin:0 0 8px;font-size:20px;color:#111827;">Ďakujeme za vašu správu</h2>
-        <p style="margin:0 0 24px;color:#6b7280;font-size:14px;">Prijali sme vašu správu a ozveme sa vám čo najskôr.</p>
+    [$customerBody, $adminBody] = buildContactEmails($name, $email, $phone, $subjectText, $message);
 
-        <div style="background:#f0f7f3;border-radius:8px;padding:20px;margin-bottom:24px;">
-            <table style="width:100%;border-collapse:collapse;font-size:14px;font-family:Arial,sans-serif;">
-                <tr>
-                    <td style="padding:6px 0;color:#6b7280;width:100px;">Meno:</td>
-                    <td style="padding:6px 0;color:#111827;font-weight:500;">' . htmlspecialchars($name) . '</td>
-                </tr>
-                <tr>
-                    <td style="padding:6px 0;color:#6b7280;">Predmet:</td>
-                    <td style="padding:6px 0;color:#111827;font-weight:500;">' . htmlspecialchars($subjectText) . '</td>
-                </tr>
-            </table>
-        </div>
+    sendHtmlEmail($email, 'Prijali sme vašu správu – ' . COMPANY_NAME, $customerBody, ADMIN_NOTIFY_EMAIL);
 
-        <div style="background:#f9fafb;border-left:3px solid #1a5632;padding:16px;border-radius:0 8px 8px 0;margin-bottom:24px;">
-            <p style="margin:0 0 4px;font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;">Vaša správa:</p>
-            <p style="margin:0;font-size:14px;color:#374151;line-height:1.6;white-space:pre-line;">' . htmlspecialchars($message) . '</p>
-        </div>
-
-        <p style="margin:0;font-size:13px;color:#6b7280;">Ak máte ďalšie otázky, neváhajte nás kontaktovať na <a href="mailto:' . COMPANY_EMAIL . '" style="color:#1a5632;">' . COMPANY_EMAIL . '</a> alebo na tel. č. ' . COMPANY_PHONE . '.</p>';
-
-    sendHtmlEmail($email, 'Prijali sme vašu správu – ' . COMPANY_NAME, $customerBody);
-
-    $adminBody = '
-        <h2 style="margin:0 0 8px;font-size:20px;color:#111827;">Nová správa z kontaktného formulára</h2>
-        <p style="margin:0 0 24px;color:#6b7280;font-size:14px;">' . date('d.m.Y H:i') . '</p>
-
-        <table style="width:100%;border-collapse:collapse;font-size:14px;font-family:Arial,sans-serif;margin-bottom:24px;">
-            <tr style="border-bottom:1px solid #f3f4f6;">
-                <td style="padding:10px 0;color:#6b7280;width:120px;">Meno:</td>
-                <td style="padding:10px 0;color:#111827;font-weight:600;">' . htmlspecialchars($name) . '</td>
-            </tr>
-            <tr style="border-bottom:1px solid #f3f4f6;">
-                <td style="padding:10px 0;color:#6b7280;">E-mail:</td>
-                <td style="padding:10px 0;"><a href="mailto:' . htmlspecialchars($email) . '" style="color:#1a5632;font-weight:500;">' . htmlspecialchars($email) . '</a></td>
-            </tr>
-            <tr style="border-bottom:1px solid #f3f4f6;">
-                <td style="padding:10px 0;color:#6b7280;">Predmet:</td>
-                <td style="padding:10px 0;color:#111827;">' . htmlspecialchars($subjectText) . '</td>
-            </tr>
-        </table>
-
-        <div style="background:#f9fafb;border-left:3px solid #1a5632;padding:16px;border-radius:0 8px 8px 0;margin-bottom:24px;">
-            <p style="margin:0 0 4px;font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;">Správa:</p>
-            <p style="margin:0;font-size:14px;color:#374151;line-height:1.6;white-space:pre-line;">' . htmlspecialchars($message) . '</p>
-        </div>
-
-        <a href="mailto:' . htmlspecialchars($email) . '" style="display:inline-block;background:#1a5632;color:#fff;text-decoration:none;padding:10px 24px;border-radius:8px;font-size:14px;font-weight:500;">Odpovedať zákazníkovi</a>';
-
-    sendHtmlEmail(COMPANY_EMAIL, 'Web: ' . $subjectText . ' – ' . $name, $adminBody);
+    // Notifikacia pre admina ide rovnako ako pri objednavkach a dopytoch VERIGA priamo do schranky
+    // (IMAP), lebo SMTP odoslanie "sam sebe" mailserver zahadzuje - viz appendToInbox().
+    appendToInbox('Web: ' . $subjectText . ' – ' . $name, $adminBody, $email);
 }
 
 function sendOrderConfirmation(string $orderNumber, array $orderData, array $cart, float $total): void
@@ -448,7 +463,7 @@ function sendOrderConfirmation(string $orderNumber, array $orderData, array $car
     // odosielaju (SMTP_USER) - normalne SMTP odoslanie "sam sebe" by tichuo
     // zlyhalo (anti-loop ochrana mailservera), preto sa zapisuje priamo do
     // schranky cez IMAP (viz appendToInbox()).
-    appendToInbox('Nová objednávka ' . $orderNumber . ' – ' . formatPrice($total), $adminBody);
+    appendToInbox('Nová objednávka ' . $orderNumber . ' – ' . formatPrice($total), $adminBody, $orderData['email']);
 }
 
 /**
@@ -500,4 +515,91 @@ function sendOrderStatusEmail(array $order, string $newStatus, string $adminNote
         <p style="margin:0;font-size:13px;color:#6b7280;line-height:1.6;">V prípade otázok nás kontaktujte na <a href="mailto:' . COMPANY_EMAIL . '" style="color:#1a5632;">' . COMPANY_EMAIL . '</a> alebo na tel. č. ' . COMPANY_PHONE . '.</p>';
 
     sendHtmlEmail($order['email'], 'Objednávka ' . $orderNumber . ' – ' . $content['subject'] . ' – ' . COMPANY_NAME, $body, ADMIN_NOTIFY_EMAIL);
+}
+
+/**
+ * Texty e-mailov pre dopyt na snehove retaze VERIGA (zakaznik + admin).
+ * Vracia [telo pre zakaznika, telo pre admina] - HTML bez obalu (obal robi buildEmailHtml()).
+ */
+function buildVerigaInquiryEmails(array $d): array
+{
+    $accent = '#14487f';
+    $logo = SITE_URL . '/assets/images/veriga/veriga-logo.png';
+    $h = static fn(string $s): string => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
+
+    $row = static function (string $label, string $value) use ($h): string {
+        if ($value === '') {
+            return '';
+        }
+        return '<tr>'
+            . '<td style="padding:9px 0;border-bottom:1px solid #e5eaf0;color:#6b7280;font-size:13px;width:170px;vertical-align:top;">' . $label . '</td>'
+            . '<td style="padding:9px 0;border-bottom:1px solid #e5eaf0;color:#0f172a;font-size:14px;font-weight:600;">' . $h($value) . '</td>'
+            . '</tr>';
+    };
+
+    $request = '<table role="presentation" style="width:100%;border-collapse:collapse;font-family:Arial,sans-serif;">'
+        . $row('Typ reťazí', $d['type_label'])
+        . $row('Označenie pneumatík', $d['tire'])
+        . $row('Označenie stroja / vozidla', $d['machine'])
+        . $row('Počet párov', (string) $d['quantity'])
+        . '</table>';
+
+    $note = $d['note'] !== ''
+        ? '<div style="margin-top:18px;padding:14px 16px;background:#f8fafc;border-left:3px solid ' . $accent . ';border-radius:0 8px 8px 0;">'
+            . '<p style="margin:0 0 4px;font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;">Poznámka</p>'
+            . '<p style="margin:0;font-size:14px;color:#374151;line-height:1.6;white-space:pre-line;">' . $h($d['note']) . '</p></div>'
+        : '';
+
+    $brand = '<div style="margin:0 0 22px;"><img src="' . $logo . '" alt="VERIGA" width="140" style="height:auto;display:block;border:0;"></div>';
+
+    $step = static fn(string $n, string $text): string =>
+        '<tr><td style="padding:6px 12px 6px 0;vertical-align:top;"><span style="display:inline-block;width:24px;height:24px;line-height:24px;text-align:center;border-radius:12px;background:' . $accent . ';color:#fff;font-size:12px;font-weight:700;">' . $n . '</span></td>'
+        . '<td style="padding:6px 0;font-size:14px;color:#374151;line-height:1.5;">' . $text . '</td></tr>';
+
+    $customer = $brand
+        . '<h2 style="margin:0 0 8px;font-size:21px;color:#0f172a;">Ďakujeme za váš dopyt, ' . $h($d['name']) . '</h2>'
+        . '<p style="margin:0 0 22px;font-size:14px;color:#4b5563;line-height:1.6;">Prijali sme váš dopyt na snehové reťaze VERIGA. Pripravíme cenovú ponuku podľa údajov nižšie a pošleme ju na tento e-mail.</p>'
+        . '<div style="padding:18px 20px;background:#eef4fb;border-radius:10px;margin-bottom:6px;">'
+        . '<p style="margin:0 0 6px;font-size:11px;color:' . $accent . ';text-transform:uppercase;letter-spacing:.08em;font-weight:700;">Váš dopyt</p>'
+        . $request . '</div>'
+        . $note
+        . '<h3 style="margin:26px 0 8px;font-size:15px;color:#0f172a;">Čo bude nasledovať</h3>'
+        . '<table role="presentation" style="border-collapse:collapse;font-family:Arial,sans-serif;">'
+        . $step('1', 'Skontrolujeme rozmer pneumatík a vhodný model reťazí.')
+        . $step('2', 'Pošleme vám cenovú ponuku e-mailom.')
+        . $step('3', 'Ak budeme potrebovať doplniť údaje, ozveme sa vám.')
+        . '</table>'
+        . '<p style="margin:26px 0 0;font-size:13px;color:#6b7280;line-height:1.6;">Máte otázky alebo chcete niečo doplniť? Odpovedzte na tento e-mail, napíšte na <a href="mailto:' . COMPANY_EMAIL . '" style="color:' . $accent . ';">' . COMPANY_EMAIL . '</a> alebo zavolajte na <strong>' . COMPANY_PHONE . '</strong>.</p>';
+
+    $admin = $brand
+        . '<h2 style="margin:0 0 4px;font-size:21px;color:#0f172a;">Nový dopyt na snehové reťaze VERIGA</h2>'
+        . '<p style="margin:0 0 20px;font-size:13px;color:#6b7280;">' . date('d.m.Y H:i') . '</p>'
+        . '<div style="padding:18px 20px;background:#eef4fb;border-radius:10px;margin-bottom:6px;">'
+        . '<p style="margin:0 0 6px;font-size:11px;color:' . $accent . ';text-transform:uppercase;letter-spacing:.08em;font-weight:700;">Čo zákazník potrebuje</p>'
+        . $request . '</div>'
+        . $note
+        . '<div style="padding:18px 20px;background:#f8fafc;border:1px solid #e5eaf0;border-radius:10px;margin-top:18px;">'
+        . '<p style="margin:0 0 6px;font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;font-weight:700;">Zákazník</p>'
+        . '<table role="presentation" style="width:100%;border-collapse:collapse;font-family:Arial,sans-serif;">'
+        . $row('Meno', $d['name'])
+        . '<tr><td style="padding:9px 0;border-bottom:1px solid #e5eaf0;color:#6b7280;font-size:13px;width:170px;">E-mail</td><td style="padding:9px 0;border-bottom:1px solid #e5eaf0;font-size:14px;font-weight:600;"><a href="mailto:' . $h($d['email']) . '" style="color:' . $accent . ';">' . $h($d['email']) . '</a></td></tr>'
+        . ($d['phone'] !== '' ? '<tr><td style="padding:9px 0;color:#6b7280;font-size:13px;width:170px;">Telefón</td><td style="padding:9px 0;font-size:14px;font-weight:600;"><a href="tel:' . $h(preg_replace('/[^0-9+]/', '', $d['phone'])) . '" style="color:' . $accent . ';">' . $h($d['phone']) . '</a></td></tr>' : '')
+        . '</table></div>'
+        . '<p style="margin:24px 0 0;"><a href="mailto:' . $h($d['email']) . '?subject=' . rawurlencode('Cenová ponuka – snehové reťaze VERIGA') . '" style="display:inline-block;background:' . $accent . ';color:#fff;text-decoration:none;padding:12px 26px;border-radius:8px;font-size:14px;font-weight:600;">Odpovedať zákazníkovi</a></p>';
+
+    return [$customer, $admin];
+}
+
+/**
+ * Dopyt na snehove retaze VERIGA (snehove-retaze-veriga.php). Zakaznik dostane
+ * potvrdenie, admin dopyt priamo do schranky (IMAP) - ako pri objednavkach, lebo
+ * SMTP odoslanie "sam sebe" mailserver zahadzuje (viz appendToInbox()).
+ */
+function sendVerigaInquiry(array $d): void
+{
+    [$customerBody, $adminBody] = buildVerigaInquiryEmails($d);
+
+    sendHtmlEmail($d['email'], 'Prijali sme váš dopyt na snehové reťaze VERIGA – ' . COMPANY_NAME, $customerBody, ADMIN_NOTIFY_EMAIL);
+
+    appendToInbox('Dopyt VERIGA: ' . $d['type_label'] . ' – ' . $d['name'], $adminBody, $d['email']);
 }

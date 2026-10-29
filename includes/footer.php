@@ -7,7 +7,7 @@
                     <div class="footer__logo">
                         <img src="/assets/images/orvex_logo_hl.png" alt="<?= e(COMPANY_NAME) ?>" class="footer__logo-img">
                     </div>
-                    <p>Predaj LKT a náhradné diely LKT (NDLKT) od roku 1991. Lesná kolesová technika a príslušenstvo.</p>
+                    <p>Náhradné diely na LKT (NDLKT) a predaj LKT od roku 1991. Lesná kolesová technika a príslušenstvo.</p>
                 </div>
                 <div class="footer__contacts" data-nosnippet>
                     <a href="tel:+421434135968" class="footer__contact-item">
@@ -159,6 +159,16 @@
     <button class="cookie-fab" id="cookieFab" aria-label="Nastavenia cookies" hidden>
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="8.5" cy="10.5" r="1"/><circle cx="12" cy="15" r="1"/><circle cx="15.5" cy="9" r="1"/></svg>
     </button>
+
+<?php if (empty($hideVerigaPopup)): ?>
+    <aside class="veriga-popup" id="verigaPopup" role="dialog" aria-label="Spolupráca s VERIGA" hidden>
+        <button type="button" class="veriga-popup__close" id="verigaPopupClose" aria-label="Zavrieť">&times;</button>
+        <img src="/assets/images/veriga/veriga-logo.png" alt="VERIGA" width="130" height="30">
+        <strong>Sme zástupca VERIGA pre Slovensko</strong>
+        <p>Snehové reťaze pre autá, pracovné a lesné stroje. Pošleme vám cenovú ponuku.</p>
+        <a href="/snehove-retaze-veriga" class="btn btn--primary btn--sm">Vyžiadať ponuku</a>
+    </aside>
+<?php endif; ?>
 
     <script src="/assets/js/app.js?v=<?= filemtime(__DIR__ . '/../assets/js/app.js') ?>"></script>
 </body>

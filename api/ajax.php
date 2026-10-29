@@ -140,8 +140,61 @@ switch ($action) {
             exit;
         }
 
-        sendContactConfirmation($name, $email, $subject, $message);
+        sendContactConfirmation($name, $email, $subject, $message, $phone);
         echo json_encode(['success' => true, 'message' => 'Správa bola odoslaná. Potvrdenie sme vám poslali na e-mail.']);
+        break;
+
+    case 'veriga_inquiry':
+        $csrfToken = trim($_POST['csrf_token'] ?? '');
+        if (!verifyCsrfToken($csrfToken)) {
+            echo json_encode(['success' => false, 'message' => 'Neplatný bezpečnostný token. Skúste obnoviť stránku.']);
+            exit;
+        }
+
+        // Tichy no-op pre spamovacich botov (viz contact_form).
+        if (isSpamSubmission()) {
+            echo json_encode(['success' => true, 'message' => 'Dopyt bol odoslaný. Cenovú ponuku vám zašleme e-mailom.']);
+            exit;
+        }
+
+        $types = [
+            'osobne' => 'Osobné auto',
+            'suv' => 'SUV, 4×4 a dodávky',
+            'nakladne' => 'Nákladné auto / autobus',
+            'pracovne' => 'Traktor / pracovný stroj',
+            'lesne' => 'Lesný stroj',
+            'male' => 'ATV, vozík, záhradný traktor, snehová fréza',
+        ];
+        // Mazeme riadkove zalomenia z jednoriadkovych poli a orezavame dlzku.
+        $line = static fn(string $v, int $max): string => mb_substr(trim(preg_replace('/\s+/u', ' ', $v)), 0, $max);
+
+        $typeKey = $_POST['type'] ?? '';
+        $inquiry = [
+            'type_label' => $types[$typeKey] ?? '',
+            'tire' => $line((string) ($_POST['tire'] ?? ''), 60),
+            'machine' => $line((string) ($_POST['machine'] ?? ''), 120),
+            'quantity' => max(1, min(50, (int) ($_POST['quantity'] ?? 1))),
+            'name' => $line((string) ($_POST['name'] ?? ''), 100),
+            'email' => trim((string) ($_POST['email'] ?? '')),
+            'phone' => $line((string) ($_POST['phone'] ?? ''), 40),
+            'note' => mb_substr(trim((string) ($_POST['note'] ?? '')), 0, 1500),
+        ];
+
+        if ($inquiry['type_label'] === '' || $inquiry['tire'] === '' || $inquiry['machine'] === '' || $inquiry['name'] === '' || $inquiry['email'] === '') {
+            echo json_encode(['success' => false, 'message' => 'Vyplňte všetky povinné polia.']);
+            exit;
+        }
+        if (!filter_var($inquiry['email'], FILTER_VALIDATE_EMAIL)) {
+            echo json_encode(['success' => false, 'message' => 'Zadajte platnú e-mailovú adresu.']);
+            exit;
+        }
+        if (empty($_POST['consent'])) {
+            echo json_encode(['success' => false, 'message' => 'Potvrďte súhlas so spracovaním osobných údajov.']);
+            exit;
+        }
+
+        sendVerigaInquiry($inquiry);
+        echo json_encode(['success' => true, 'message' => 'Dopyt bol odoslaný. Cenovú ponuku vám zašleme na uvedený e-mail.']);
         break;
 
     default:

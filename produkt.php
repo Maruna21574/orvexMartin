@@ -14,9 +14,9 @@ if (!$product) {
     exit;
 }
 
-$pageTitle = $product['name'];
+$pageTitle = $product['name'] . ' - náhradný diel na LKT';
 // Popis z MRP obsahuje interne poznamky (dodavatelia, cisla objednavok), preto do meta nejde.
-$pageDescription = mb_substr($product['name'] . ' - náhradný diel LKT (NDLKT), kód ' . $product['sku'] . '. Doprava po celom Slovensku, odborné poradenstvo. ORVEX Martin.', 0, 160);
+$pageDescription = mb_substr($product['name'] . ' - náhradný diel na LKT (NDLKT), kód ' . $product['sku'] . '. Doprava po celom Slovensku, odborné poradenstvo. ORVEX Martin.', 0, 160);
 $pageProduct = true;
 if (!empty($product['image'])) {
     $pageImage = SITE_URL . '/' . $product['image'];
@@ -128,7 +128,7 @@ require_once 'includes/header.php';
                 <span class="product-detail__category"><?= e($product['category']) ?></span>
                 <h1><?= e($product['name']) ?></h1>
                 <p class="product-detail__sku">Kód produktu: <strong><?= e($product['sku']) ?></strong></p>
-                <p class="product-detail__seo"><?= e($product['name']) ?> - náhradný diel pre lesné kolesové traktory (LKT, NDLKT)<?= $product['category'] ? ', kategória ' . e(mb_strtolower($product['category'])) : '' ?>. Predaj LKT dielov s dopravou po celom Slovensku.</p>
+                <p class="product-detail__seo"><?= e($product['name']) ?> - náhradný diel na LKT, lesné kolesové traktory (NDLKT)<?= $product['category'] ? ', kategória ' . e(mb_strtolower($product['category'])) : '' ?>. Predaj LKT dielov s dopravou po celom Slovensku.</p>
 
                 <div class="product-detail__price-box">
                     <?php if ($product['stock'] > 0): ?>

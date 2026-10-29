@@ -1,10 +1,10 @@
 <?php
 $pageTitle = 'O nás';
-$pageDescription = 'ORVEX MT spol. s r.o. - predaj LKT a náhradných dielov LKT. Spoľahlivý partner pre profesionálov v lesníctve a ťažbe dreva od roku 1991.';
+$pageDescription = 'ORVEX MT spol. s r.o. - predaj LKT a náhradných dielov na LKT. Spoľahlivý partner pre profesionálov v lesníctve a ťažbe dreva od roku 1991.';
 require_once 'includes/header.php';
 ?>
 
-<section class="hero hero--sm">
+<section class="hero hero--sm hero--photo" style="--hero-img:url('/assets/images/hero-lkt-klest.webp')">
     <div class="container">
         <div class="hero__content">
             <span class="hero__badge">Od roku 1991</span>
@@ -131,39 +131,43 @@ require_once 'includes/header.php';
     </div>
 </section>
 
-<section class="section home-story">
-    <div class="container home-story__grid">
-        <div class="home-story__media">
-            <img src="/assets/images/hero-bg.jpg" alt="Európsky les pri horskom jazere" loading="lazy">
-        </div>
-        <div class="home-story__content">
+<section class="section story3">
+    <div class="container">
+        <div class="story3__head">
             <span class="section__eyebrow">Viac než e-shop</span>
             <h2>Riešenia pre prácu v lese na jednom mieste</h2>
             <p>Pomáhame profesionálom vybrať techniku, diely a vybavenie podľa skutočného spôsobu použitia. Od bežnej náhrady až po riešenie pre náročné podmienky.</p>
-            <div class="home-story__points">
-                <div class="home-story__point">
-                    <span class="home-story__point-icon">01</span>
-                    <div>
-                        <strong>Technika a príslušenstvo</strong>
-                        <span>Prehľad sortimentu pre lesné hospodárstvo.</span>
-                    </div>
-                </div>
-                <div class="home-story__point">
-                    <span class="home-story__point-icon">02</span>
-                    <div>
-                        <strong>Diely podľa katalógového čísla</strong>
-                        <span>Vyhľadajte vhodný diel rýchlo a presne.</span>
-                    </div>
-                </div>
-                <div class="home-story__point">
-                    <span class="home-story__point-icon">03</span>
-                    <div>
-                        <strong>Odborné poradenstvo</strong>
-                        <span>Keď si nie ste istí výberom, ozvite sa nám.</span>
-                    </div>
-                </div>
+        </div>
+        <div class="story3__photo">
+            <img src="/assets/images/sidlo-orvex-lkt.webp" alt="Sídlo a sklad ORVEX MT v Bystričke" width="1600" height="900" loading="lazy">
+            <div class="story3__badge">
+                <strong>1991</strong>
+                <span>na trhu s lesnou technikou</span>
             </div>
-            <a href="/produkty" class="btn btn--outline">Pozrieť produkty</a>
+        </div>
+        <div class="story3__card">
+            <div class="story3__col">
+                <span class="story3__icon" aria-hidden="true">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 6h13v10H1zM14 10h4l3 3v3h-7"/><circle cx="5.5" cy="19" r="1.5"/><circle cx="17.5" cy="19" r="1.5"/></svg>
+                </span>
+                <strong>Technika a príslušenstvo</strong>
+                <span>Prehľad sortimentu pre lesné hospodárstvo.</span>
+            </div>
+            <div class="story3__col">
+                <span class="story3__icon" aria-hidden="true">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </span>
+                <strong>Diely podľa katalógového čísla</strong>
+                <span>Vyhľadajte vhodný diel rýchlo a presne.</span>
+            </div>
+            <div class="story3__col">
+                <span class="story3__icon" aria-hidden="true">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                </span>
+                <strong>Odborné poradenstvo</strong>
+                <span>Keď si nie ste istí výberom, ozvite sa nám.</span>
+            </div>
+            <a href="/produkty" class="btn btn--primary btn--lg story3__btn">Pozrieť produkty</a>
         </div>
     </div>
 </section>

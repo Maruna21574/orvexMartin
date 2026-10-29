@@ -1,6 +1,7 @@
 <?php
 $pageTitle = 'Košík';
 $pageNoindex = true;
+$hideVerigaPopup = true;
 require_once 'includes/header.php';
 
 $cart = getCart();

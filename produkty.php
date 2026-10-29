@@ -1,14 +1,14 @@
 <?php
-$pageTitle = 'Náhradné diely LKT a príslušenstvo';
-$pageDescription = 'Náhradné diely LKT (NDLKT): ložiská, filtre, brzdy, hydraulika, hriadele, tesnenia a ďalšie. Predaj LKT a príslušenstva s dopravou po celom Slovensku.';
+$pageTitle = 'Náhradné diely na LKT a príslušenstvo';
+$pageDescription = 'Náhradné diely na LKT (NDLKT): ložiská, filtre, brzdy, hydraulika, hriadele, tesnenia a ďalšie. Predaj LKT a príslušenstva s dopravou po celom Slovensku.';
 require_once __DIR__ . '/config.php';
 
 // Titulok kategorie a noindex pre vysledky hladania/filtrov musia byt znamy pred vykreslenim hlavicky.
 $requestedCategory = trim($_GET['kategoria'] ?? '');
 foreach (getCategories() as $metaCat) {
     if ($requestedCategory !== '' && $metaCat['id'] === $requestedCategory) {
-        $pageTitle = $metaCat['name'] . ' - náhradné diely LKT (NDLKT)';
-        $pageDescription = $metaCat['name'] . ' - náhradné diely LKT (NDLKT) a príslušenstvo. Predaj LKT s dopravou po celom Slovensku. ORVEX Martin.';
+        $pageTitle = $metaCat['name'] . ' - náhradné diely na LKT (NDLKT)';
+        $pageDescription = $metaCat['name'] . ' - náhradné diely na LKT (NDLKT) a príslušenstvo. Predaj LKT s dopravou po celom Slovensku. ORVEX Martin.';
         break;
     }
 }
@@ -127,7 +127,7 @@ $categoryLimit = 6;
 $showAllCategories = $activeCategoryIndex >= $categoryLimit;
 ?>
 
-<section class="page-header">
+<section class="page-header page-header--photo" style="--ph-img:url('/assets/images/hero-diely.webp')">
     <div class="container">
         <h1>
             <?php if ($activeCategoryName): ?>
