@@ -191,7 +191,7 @@ if ($featuredProducts === []) {
             <div class="products-grid products-slider__track" data-products-track>
             <?php foreach ($featuredProducts as $product): ?>
                 <div class="product-card">
-                    <a href="/produkt?id=<?= e($product['id']) ?>" class="product-card__image">
+                    <a href="<?= e(productUrl($product)) ?>" class="product-card__image">
                         <?php if (!empty($product['image'])): ?>
                             <img src="<?= e($product['image']) ?>" alt="<?= e($product['name']) ?>" loading="lazy">
                         <?php else: ?>
@@ -205,7 +205,7 @@ if ($featuredProducts === []) {
                     </a>
                     <div class="product-card__body">
                         <span class="product-card__category"><?= e($product['category']) ?></span>
-                        <h3><a href="/produkt?id=<?= e($product['id']) ?>"><?= e($product['name']) ?></a></h3>
+                        <h3><a href="<?= e(productUrl($product)) ?>"><?= e($product['name']) ?></a></h3>
                         <p class="product-card__sku">Kód: <?= e($product['sku']) ?></p>
                     </div>
                     <div class="product-card__footer">
@@ -226,7 +226,7 @@ if ($featuredProducts === []) {
                             <div class="product-card__price">
                                 <span class="product-card__price-vat product-card__price-vat--unavailable">Cena na vyžiadanie</span>
                             </div>
-                            <a href="/produkt?id=<?= e($product['id']) ?>#dopyt" class="btn btn--outline btn--sm">Vyžiadať cenu</a>
+                            <a href="<?= e(productUrl($product)) ?>#dopyt" class="btn btn--outline btn--sm">Vyžiadať cenu</a>
                         <?php endif; ?>
                     </div>
                 </div>

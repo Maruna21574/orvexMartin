@@ -1,6 +1,25 @@
 <?php
 $pageTitle = 'Náhradné diely LKT a príslušenstvo';
 $pageDescription = 'Náhradné diely LKT (NDLKT): ložiská, filtre, brzdy, hydraulika, hriadele, tesnenia a ďalšie. Predaj LKT a príslušenstva s dopravou po celom Slovensku.';
+require_once __DIR__ . '/config.php';
+
+// Titulok kategorie a noindex pre vysledky hladania/filtrov musia byt znamy pred vykreslenim hlavicky.
+$requestedCategory = trim($_GET['kategoria'] ?? '');
+foreach (getCategories() as $metaCat) {
+    if ($requestedCategory !== '' && $metaCat['id'] === $requestedCategory) {
+        $pageTitle = $metaCat['name'] . ' - náhradné diely LKT (NDLKT)';
+        $pageDescription = $metaCat['name'] . ' - náhradné diely LKT (NDLKT) a príslušenstvo. Predaj LKT s dopravou po celom Slovensku. ORVEX Martin.';
+        break;
+    }
+}
+$currentPage = max(1, (int) ($_GET['strana'] ?? 1));
+if ($currentPage > 1) {
+    $pageTitle .= ' - strana ' . $currentPage;
+    $pageDescription .= ' Strana ' . $currentPage . '.';
+}
+if (array_intersect_key($_GET, array_flip(['hladaj', 'cena_od', 'cena_do', 'zoradit']))) {
+    $pageNoindex = true;
+}
 require_once 'includes/header.php';
 
 $search = trim($_GET['hladaj'] ?? '');
@@ -74,6 +93,23 @@ if ($sort !== '') {
         }
     });
 }
+$totalProducts = count($products);
+$perPage = 24;
+$totalPages = max(1, (int) ceil($totalProducts / $perPage));
+if ($currentPage > $totalPages) {
+    header('Location: ' . strtok($_SERVER['REQUEST_URI'], '?') . '?' . http_build_query(['strana' => $totalPages] + array_diff_key($_GET, ['strana' => 1])), true, 302);
+    exit;
+}
+$products = array_slice($products, ($currentPage - 1) * $perPage, $perPage);
+
+$pageUrl = static function (int $page): string {
+    $query = array_diff_key($_GET, ['strana' => 1]);
+    if ($page > 1) {
+        $query['strana'] = $page;
+    }
+    return '/produkty' . ($query ? '?' . http_build_query($query) : '');
+};
+
 $categories = getCategories();
 
 $activeCategoryName = '';
@@ -199,7 +235,7 @@ $showAllCategories = $activeCategoryIndex >= $categoryLimit;
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/></svg>
                             Filtre
                         </button>
-                        <span class="products-count"><?= count($products) ?> produktov</span>
+                        <span class="products-count"><?= $totalProducts ?> produktov</span>
                     </div>
                     <div class="products-sort">
                         <label for="sortSelect">Zoradiť:</label>
@@ -210,6 +246,10 @@ $showAllCategories = $activeCategoryIndex >= $categoryLimit;
                         </select>
                     </div>
                 </div>
+
+                <?php if ($currentPage === 1 && !$search && !$priceFilterActive): ?>
+                    <p class="category-intro"><?= e($activeCategoryName !== '' ? getCategoryIntro($activeCategoryName) : 'Predaj LKT a náhradné diely LKT (NDLKT) pre lesné kolesové traktory. Ložiská, filtre, brzdy, hydraulika, hriadele, tesnenia a ďalšie diely s dopravou po celom Slovensku. Nenašli ste svoj diel? Napíšte nám alebo zavolajte.') ?></p>
+                <?php endif; ?>
 
                 <?php if (empty($products)): ?>
                     <div class="empty-state">
@@ -227,7 +267,7 @@ $showAllCategories = $activeCategoryIndex >= $categoryLimit;
                     <div class="products-grid">
                         <?php foreach ($products as $product): ?>
                             <div class="product-card">
-                                <a href="/produkt?id=<?= e($product['id']) ?>" class="product-card__image">
+                                <a href="<?= e(productUrl($product)) ?>" class="product-card__image">
                                     <?php if (!empty($product['image'])): ?>
                                         <img src="<?= e($product['image']) ?>" alt="<?= e($product['name']) ?>" loading="lazy">
                                     <?php else: ?>
@@ -241,7 +281,7 @@ $showAllCategories = $activeCategoryIndex >= $categoryLimit;
                                 </a>
                                 <div class="product-card__body">
                                     <span class="product-card__category"><?= e($product['category']) ?></span>
-                                    <h3><a href="/produkt?id=<?= e($product['id']) ?>"><?= e($product['name']) ?></a></h3>
+                                    <h3><a href="<?= e(productUrl($product)) ?>"><?= e($product['name']) ?></a></h3>
                                     <p class="product-card__sku">Kód: <?= e($product['sku']) ?></p>
                                 </div>
                                 <div class="product-card__footer">
@@ -264,12 +304,30 @@ $showAllCategories = $activeCategoryIndex >= $categoryLimit;
                                         <div class="product-card__price">
                                             <span class="product-card__price-vat product-card__price-vat--unavailable">Cena na vyžiadanie</span>
                                         </div>
-                                        <a href="/produkt?id=<?= e($product['id']) ?>#dopyt" class="btn btn--outline btn--sm">Vyžiadať cenu</a>
+                                        <a href="<?= e(productUrl($product)) ?>#dopyt" class="btn btn--outline btn--sm">Vyžiadať cenu</a>
                                     <?php endif; ?>
                                 </div>
                             </div>
                         <?php endforeach; ?>
                     </div>
+
+                    <?php if ($totalPages > 1): ?>
+                        <nav class="pagination" aria-label="Stránkovanie">
+                            <?php if ($currentPage > 1): ?>
+                                <a href="<?= e($pageUrl($currentPage - 1)) ?>" rel="prev">&laquo; Predošlá</a>
+                            <?php endif; ?>
+                            <?php for ($p = max(1, $currentPage - 2); $p <= min($totalPages, $currentPage + 2); $p++): ?>
+                                <?php if ($p === $currentPage): ?>
+                                    <span class="pagination__current" aria-current="page"><?= $p ?></span>
+                                <?php else: ?>
+                                    <a href="<?= e($pageUrl($p)) ?>"><?= $p ?></a>
+                                <?php endif; ?>
+                            <?php endfor; ?>
+                            <?php if ($currentPage < $totalPages): ?>
+                                <a href="<?= e($pageUrl($currentPage + 1)) ?>" rel="next">Ďalšia &raquo;</a>
+                            <?php endif; ?>
+                        </nav>
+                    <?php endif; ?>
                 <?php endif; ?>
             </div>
         </div>

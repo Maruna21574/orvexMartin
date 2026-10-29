@@ -1,5 +1,6 @@
 <?php
 $pageTitle = 'Objednávka';
+$pageNoindex = true;
 require_once 'includes/header.php';
 
 $cart = getCart();

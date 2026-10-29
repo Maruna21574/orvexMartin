@@ -37,7 +37,7 @@ foreach (getCategories() as $category) {
 
 // Vsetky produkty
 foreach (getProducts() as $product) {
-    echo sitemapUrl(SITE_URL . '/produkt?id=' . urlencode($product['id']), 'weekly', '0.8');
+    echo sitemapUrl(SITE_URL . productUrl($product), 'weekly', '0.8');
 }
 
 echo '</urlset>' . "\n";

@@ -402,3 +402,47 @@ function isSpamSubmission(): bool
 
     return false;
 }
+
+// Slovenske/ceske znaky -> ASCII pre slug v URL (iconv//TRANSLIT je na roznych OS nespolahlivy).
+function slugify(string $text, int $maxLength = 60): string
+{
+    $text = mb_strtolower($text, 'UTF-8');
+    $text = strtr($text, [
+        'á' => 'a', 'ä' => 'a', 'č' => 'c', 'ď' => 'd', 'é' => 'e', 'ě' => 'e', 'í' => 'i', 'ĺ' => 'l', 'ľ' => 'l',
+        'ň' => 'n', 'ó' => 'o', 'ô' => 'o', 'ö' => 'o', 'ŕ' => 'r', 'ř' => 'r', 'š' => 's', 'ť' => 't', 'ú' => 'u',
+        'ů' => 'u', 'ü' => 'u', 'ý' => 'y', 'ž' => 'z',
+    ]);
+    $text = trim(preg_replace('/[^a-z0-9]+/', '-', $text), '-');
+    if (strlen($text) > $maxLength) {
+        $text = rtrim(substr($text, 0, $maxLength), '-');
+    }
+    return $text !== '' ? $text : 'produkt';
+}
+
+// Pekna URL produktu: /produkt/kryt-ventilatora-2 (id na konci, podla neho sa produkt vyhlada).
+function productUrl(array $product): string
+{
+    return '/produkt/' . slugify((string) ($product['name'] ?? '')) . '-' . rawurlencode((string) $product['id']);
+}
+
+// Uvodny text kategorie pre /produkty?kategoria=... (SEO text s klucovymi slovami LKT / NDLKT).
+function getCategoryIntro(string $categoryName): string
+{
+    $intros = [
+        'Ložiská' => 'Ložiská ako náhradné diely LKT (NDLKT) pre lesné kolesové traktory. V ponuke nájdete ložiská na nápravy, kolesá, prevodovky a ďalšie uzly. Predaj LKT dielov s dopravou po celom Slovensku, pri výbere vám radi poradíme.',
+        'Filtre' => 'Filtre pre LKT – olejové, palivové, vzduchové aj hydraulické filtre ako náhradné diely LKT (NDLKT). Pravidelná výmena filtrov predlžuje životnosť motora a hydrauliky lesného kolesového traktora.',
+        'Brzdy' => 'Brzdové diely na LKT – lamely, brzdové súčasti a príslušenstvo ako náhradné diely LKT (NDLKT). Spoľahlivé brzdy sú pri práci v lese základom bezpečnosti.',
+        'Hydraulika a ventily' => 'Hydraulika pre LKT – ventily, čerpadlá, piesty, valce a ďalšie hydraulické diely. Náhradné diely LKT (NDLKT) pre lesné kolesové traktory a lesnú techniku.',
+        'Elektrika' => 'Elektrické diely na LKT – alternátory, spínače, prepínače, cievky a regulátory. Náhradné diely LKT (NDLKT) pre elektrickú výstroj lesných kolesových traktorov.',
+        'Hriadele, čapy a prevody' => 'Hriadele, čapy a prevodové diely pre LKT – kolesá, náboje, kardany, poloosi, spojky a unášače. Náhradné diely LKT (NDLKT) pre prenos výkonu lesného kolesového traktora.',
+        'Tesnenia a krúžky' => 'Tesnenia, guferá, manžety a poistné krúžky ako náhradné diely LKT (NDLKT). Kvalitné tesnenia zabraňujú úniku oleja a predlžujú životnosť uzlov lesných kolesových traktorov.',
+        'Skrutky, matice a podložky' => 'Skrutky, matice, podložky a kolíky ako drobný spojovací materiál pre LKT. Náhradné diely LKT (NDLKT) z jednej ponuky s dopravou po celom Slovensku.',
+        'Pružiny' => 'Pružiny pre LKT – náhradné diely LKT (NDLKT) pre odpruženie, spojky, brzdy a ďalšie uzly lesných kolesových traktorov.',
+        'Hadice, rúrky a spojky' => 'Hadice, rúrky, spony a prípojky pre LKT – náhradné diely LKT (NDLKT) na rozvody paliva, oleja a hydrauliky lesných kolesových traktorov.',
+        'Kryty, veká a puzdrá' => 'Kryty, veká, puzdrá a telesá ako náhradné diely LKT (NDLKT). Diely pre lesné kolesové traktory s dopravou po celom Slovensku.',
+        'Ostatné' => 'Ostatné náhradné diely LKT (NDLKT) a príslušenstvo pre lesné kolesové traktory. Ak hľadáte konkrétny diel, použite vyhľadávanie podľa kódu, alebo nám napíšte.',
+    ];
+
+    return $intros[$categoryName]
+        ?? $categoryName . ' - náhradné diely LKT (NDLKT) a príslušenstvo pre lesné kolesové traktory. Predaj LKT dielov s dopravou po celom Slovensku.';
+}

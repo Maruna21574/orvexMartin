@@ -1,9 +1,12 @@
 <?php require_once __DIR__ . '/../config.php'; ?>
 <?php
 // Canonical: cesta + len parametre, ktore menia obsah stranky (produkt, kategoria).
-$canonicalQuery = array_intersect_key($_GET, array_flip(['id', 'kategoria']));
-$canonicalUrl = SITE_URL . strtok($_SERVER['REQUEST_URI'], '?')
-    . ($canonicalQuery ? '?' . http_build_query($canonicalQuery) : '');
+$canonicalQuery = array_intersect_key($_GET, array_flip(['id', 'kategoria', 'strana']));
+if ((int) ($canonicalQuery['strana'] ?? 1) <= 1) {
+    unset($canonicalQuery['strana']);
+}
+$canonicalUrl = $pageCanonical ?? (SITE_URL . strtok($_SERVER['REQUEST_URI'], '?')
+    . ($canonicalQuery ? '?' . http_build_query($canonicalQuery) : ''));
 ?>
 <?php
 $headerCategories = array_values(array_filter(
@@ -18,6 +21,8 @@ $headerCategories = array_values(array_filter(
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= e($pageTitle ?? 'ORVEX Martin') ?> | <?= e(SITE_NAME) ?></title>
     <meta name="description" content="<?= e($pageDescription ?? 'Predaj LKT a náhradné diely LKT (NDLKT) od roku 1991. Lesná kolesová technika, snehové reťaze, hydraulické čerpadlá. ORVEX MT s.r.o.') ?>">
+    <?php if (!empty($pageNoindex)): ?><meta name="robots" content="noindex,follow">
+    <?php endif; ?>
     <link rel="canonical" href="<?= e($canonicalUrl) ?>">
     <meta property="og:type" content="<?= isset($pageProduct) ? 'product' : 'website' ?>">
     <meta property="og:site_name" content="<?= e(SITE_NAME) ?>">

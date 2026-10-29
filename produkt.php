@@ -9,7 +9,8 @@ if ($productId === '') {
 
 $product = getProduct($productId);
 if (!$product) {
-    header('Location: /produkty');
+    // Pravy 404 (nie presmerovanie) - Google tak neindexuje neexistujuce produkty ako soft-404.
+    require __DIR__ . '/404.php';
     exit;
 }
 
@@ -21,7 +22,14 @@ if (!empty($product['image'])) {
     $pageImage = SITE_URL . '/' . $product['image'];
 }
 
-$productUrl = SITE_URL . '/produkt?id=' . urlencode($product['id']);
+// Stare adresy (/produkt?id=2) a zastarane slugy presmerujeme 301 na aktualnu peknu URL.
+$prettyPath = productUrl($product);
+if (rawurldecode(strtok($_SERVER['REQUEST_URI'], '?')) !== rawurldecode($prettyPath)) {
+    header('Location: ' . $prettyPath, true, 301);
+    exit;
+}
+$productUrl = SITE_URL . $prettyPath;
+$pageCanonical = $productUrl;
 $breadcrumbItems = [['Domov', SITE_URL . '/'], ['Produkty', SITE_URL . '/produkty']];
 if ($product['category']) {
     $breadcrumbItems[] = [$product['category'], SITE_URL . '/produkty?kategoria=' . urlencode($product['category_id'])];
@@ -97,7 +105,7 @@ require_once 'includes/header.php';
             <div class="product-detail__gallery">
                 <div class="product-detail__main-image" id="mainImage">
                     <?php if (!empty($product['image'])): ?>
-                        <img src="<?= e($product['image']) ?>" alt="<?= e($product['name']) ?>">
+                        <img src="<?= e($product['image']) ?>" alt="<?= e($product['name']) ?> - náhradný diel LKT">
                     <?php else: ?>
                         <div class="product-card__placeholder product-card__placeholder--lg">
                             <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
@@ -120,6 +128,7 @@ require_once 'includes/header.php';
                 <span class="product-detail__category"><?= e($product['category']) ?></span>
                 <h1><?= e($product['name']) ?></h1>
                 <p class="product-detail__sku">Kód produktu: <strong><?= e($product['sku']) ?></strong></p>
+                <p class="product-detail__seo"><?= e($product['name']) ?> - náhradný diel pre lesné kolesové traktory (LKT, NDLKT)<?= $product['category'] ? ', kategória ' . e(mb_strtolower($product['category'])) : '' ?>. Predaj LKT dielov s dopravou po celom Slovensku.</p>
 
                 <div class="product-detail__price-box">
                     <?php if ($product['stock'] > 0): ?>
@@ -233,7 +242,7 @@ $relatedProducts = array_slice(array_values($relatedProducts), 0, 4);
         <div class="products-grid">
             <?php foreach ($relatedProducts as $rp): ?>
                 <div class="product-card">
-                    <a href="/produkt?id=<?= e($rp['id']) ?>" class="product-card__image">
+                    <a href="<?= e(productUrl($rp)) ?>" class="product-card__image">
                         <?php if (!empty($rp['image'])): ?>
                             <img src="<?= e($rp['image']) ?>" alt="<?= e($rp['name']) ?>" loading="lazy">
                         <?php else: ?>
@@ -247,7 +256,7 @@ $relatedProducts = array_slice(array_values($relatedProducts), 0, 4);
                     </a>
                     <div class="product-card__body">
                         <span class="product-card__category"><?= e($rp['category']) ?></span>
-                        <h3><a href="/produkt?id=<?= e($rp['id']) ?>"><?= e($rp['name']) ?></a></h3>
+                        <h3><a href="<?= e(productUrl($rp)) ?>"><?= e($rp['name']) ?></a></h3>
                         <p class="product-card__sku">Kód: <?= e($rp['sku']) ?></p>
                     </div>
                     <div class="product-card__footer">
@@ -268,7 +277,7 @@ $relatedProducts = array_slice(array_values($relatedProducts), 0, 4);
                             <div class="product-card__price">
                                 <span class="product-card__price-vat product-card__price-vat--unavailable">Cena na vyžiadanie</span>
                             </div>
-                            <a href="/produkt?id=<?= e($rp['id']) ?>#dopyt" class="btn btn--outline btn--sm">Vyžiadať cenu</a>
+                            <a href="<?= e(productUrl($rp)) ?>#dopyt" class="btn btn--outline btn--sm">Vyžiadať cenu</a>
                         <?php endif; ?>
                     </div>
                 </div>

@@ -1,5 +1,6 @@
 <?php
 $pageTitle = 'Košík';
+$pageNoindex = true;
 require_once 'includes/header.php';
 
 $cart = getCart();
@@ -50,7 +51,7 @@ $cartTotal = getCartTotal();
                                         <?php endif; ?>
                                     </div>
                                     <div class="cart-item__info">
-                                        <h4><a href="/produkt?id=<?= e($item['id']) ?>"><?= e($item['name']) ?></a></h4>
+                                        <h4><a href="<?= e(productUrl($item)) ?>"><?= e($item['name']) ?></a></h4>
                                         <span class="cart-item__sku">Kód: <?= e($item['sku']) ?></span>
                                     </div>
                                 </div>

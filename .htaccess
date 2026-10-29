@@ -1,6 +1,13 @@
 RewriteEngine On
 RewriteBase /
 
+# Jedna verzia domeny: https://orvex.sk (bez www, bez http) - inak Google deli hodnotenie
+# medzi viacere adresy. Pravidlo sa tyka len orvex.sk, lokalny vyvoj ostava nedotknuty.
+RewriteCond %{HTTP_HOST} ^(www\.)?orvex\.sk$ [NC]
+RewriteCond %{HTTPS} off [OR]
+RewriteCond %{HTTP_HOST} ^www\. [NC]
+RewriteRule ^ https://orvex.sk%{REQUEST_URI} [L,R=301]
+
 # Force HTTPS (uncomment in production)
 # RewriteCond %{HTTPS} off
 # RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
@@ -11,6 +18,9 @@ RewriteRule ^(.*)/$ /$1 [L,R=301]
 
 # sitemap.xml -> sitemap.php (Google/roboti ocakavaju standardnu .xml priponu)
 RewriteRule ^sitemap\.xml$ /sitemap.php [L]
+
+# Pekne URL produktov: /produkt/kryt-ventilatora-2 -> produkt.php?id=2 (id je za poslednou pomlckou)
+RewriteRule ^produkt/.*-([A-Za-z0-9]+)$ /produkt.php?id=$1 [L,QSA]
 
 # Cistes URL bez pripony .php (napr. /produkty namiesto /produkty.php) -
 # interne sa dorata .php a obsluzi sa dany subor, v adresnom riadku zostava

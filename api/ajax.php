@@ -84,6 +84,7 @@ switch ($action) {
         foreach ($results as $p) {
             $out[] = [
                 'id' => $p['id'],
+                'url' => productUrl($p),
                 'name' => $p['name'],
                 'sku' => $p['sku'],
                 'price_vat' => $p['stock'] > 0 ? formatPrice($p['price_vat']) : 'Cena na vyžiadanie',

@@ -76,7 +76,26 @@ class MrpApi
             }
         }
 
+        $this->makeImagePathsAbsolute();
+
         return $this->applyFilters($this->cachedProducts, $filters);
+    }
+
+    // Cesty k fotkam su v cache relativne (assets/img/...) - s peknymi URL (/produkt/slug-id)
+    // by sa relativny odkaz rozbil, preto ich vzdy zacneme lomitkom.
+    private function makeImagePathsAbsolute(): void
+    {
+        foreach ($this->cachedProducts as &$product) {
+            if (!empty($product['image']) && $product['image'][0] !== '/' && !str_starts_with($product['image'], 'http')) {
+                $product['image'] = '/' . $product['image'];
+            }
+            foreach ($product['images'] ?? [] as $i => $img) {
+                if ($img !== '' && $img[0] !== '/' && !str_starts_with($img, 'http')) {
+                    $product['images'][$i] = '/' . $img;
+                }
+            }
+        }
+        unset($product);
     }
 
     public function clearCache(): void

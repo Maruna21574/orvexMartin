@@ -135,7 +135,7 @@ function initLiveSearch() {
 
         var html = '';
         data.products.forEach(function (p) {
-            html += '<a href="/produkt?id=' + encodeURIComponent(p.id) + '" class="search-dropdown__item">';
+            html += '<a href="' + p.url + '" class="search-dropdown__item">';
             html += '<div class="search-dropdown__img">';
             if (p.image) {
                 html += '<img src="' + escapeHtml(p.image) + '" alt="">';

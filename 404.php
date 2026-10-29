@@ -1,6 +1,7 @@
 <?php
 http_response_code(404);
 $pageTitle = 'Stránka nenájdená';
+$pageNoindex = true;
 require_once 'includes/header.php';
 ?>
 
