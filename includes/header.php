@@ -84,7 +84,6 @@ $headerCategories = array_values(array_filter(
                     </a>
 
                     <ul class="header__menu" id="mainMenu">
-                        <li><a href="/" class="<?= isActivePage('index') ?>">Domov</a></li>
                         <li><a href="/o-nas" class="<?= isActivePage('o-nas') ?>">O nás</a></li>
                         <li class="header__menu-item--dropdown<?= isActivePage('produkty') ? ' is-active' : '' ?>">
                             <div class="header__menu-link-wrap">
@@ -109,7 +108,6 @@ $headerCategories = array_values(array_filter(
                         </li>
                         <li><a href="/snehove-retaze-veriga" class="header__menu-veriga <?= isActivePage('snehove-retaze-veriga') ?: isActivePage('snehove-retaze-veriga-typ') ?>">Reťaze VERIGA</a></li>
                         <li><a href="/kontakt" class="<?= isActivePage('kontakt') ?>">Kontakt</a></li>
-                        <li><a href="/kosik" class="<?= isActivePage('kosik') ?>">Košík</a></li>
                     </ul>
 
                     <div class="header__actions">
