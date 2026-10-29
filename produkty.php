@@ -1,5 +1,6 @@
 <?php
-$pageTitle = 'Produkty';
+$pageTitle = 'Náhradné diely LKT a príslušenstvo';
+$pageDescription = 'Náhradné diely LKT (NDLKT): ložiská, filtre, brzdy, hydraulika, hriadele, tesnenia a ďalšie. Predaj LKT a príslušenstva s dopravou po celom Slovensku.';
 require_once 'includes/header.php';
 
 $search = trim($_GET['hladaj'] ?? '');

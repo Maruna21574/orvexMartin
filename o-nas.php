@@ -1,6 +1,6 @@
 <?php
 $pageTitle = 'O nás';
-$pageDescription = 'ORVEX MT spol. s r.o. - Spoľahlivý partner pre profesionálov v lesníctve a ťažbe dreva od roku 1991.';
+$pageDescription = 'ORVEX MT spol. s r.o. - predaj LKT a náhradných dielov LKT. Spoľahlivý partner pre profesionálov v lesníctve a ťažbe dreva od roku 1991.';
 require_once 'includes/header.php';
 ?>
 

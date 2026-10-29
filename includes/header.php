@@ -1,5 +1,11 @@
 <?php require_once __DIR__ . '/../config.php'; ?>
 <?php
+// Canonical: cesta + len parametre, ktore menia obsah stranky (produkt, kategoria).
+$canonicalQuery = array_intersect_key($_GET, array_flip(['id', 'kategoria']));
+$canonicalUrl = SITE_URL . strtok($_SERVER['REQUEST_URI'], '?')
+    . ($canonicalQuery ? '?' . http_build_query($canonicalQuery) : '');
+?>
+<?php
 $headerCategories = array_values(array_filter(
     getCategories(),
     static fn(array $category): bool => !empty($category['id']) && !empty($category['name'])
@@ -11,14 +17,35 @@ $headerCategories = array_values(array_filter(
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= e($pageTitle ?? 'ORVEX Martin') ?> | <?= e(SITE_NAME) ?></title>
-    <meta name="description" content="<?= e($pageDescription ?? 'ORVEX MT s.r.o. - Predaj lesnej kolesovej techniky, náhradných dielov, snehových reťazí a hydraulických čerpadiel od roku 1991.') ?>">
-    <link rel="canonical" href="<?= e(SITE_URL . strtok($_SERVER['REQUEST_URI'], '?')) ?>">
+    <meta name="description" content="<?= e($pageDescription ?? 'Predaj LKT a náhradné diely LKT (NDLKT) od roku 1991. Lesná kolesová technika, snehové reťaze, hydraulické čerpadlá. ORVEX MT s.r.o.') ?>">
+    <link rel="canonical" href="<?= e($canonicalUrl) ?>">
     <meta property="og:type" content="<?= isset($pageProduct) ? 'product' : 'website' ?>">
     <meta property="og:site_name" content="<?= e(SITE_NAME) ?>">
     <meta property="og:title" content="<?= e($pageTitle ?? 'ORVEX Martin') ?>">
-    <meta property="og:description" content="<?= e($pageDescription ?? 'ORVEX MT s.r.o. - Predaj lesnej kolesovej techniky, náhradných dielov, snehových reťazí a hydraulických čerpadiel od roku 1991.') ?>">
-    <meta property="og:url" content="<?= e(SITE_URL . strtok($_SERVER['REQUEST_URI'], '?')) ?>">
+    <meta property="og:description" content="<?= e($pageDescription ?? 'Predaj LKT a náhradné diely LKT (NDLKT) od roku 1991. Lesná kolesová technika, snehové reťaze, hydraulické čerpadlá. ORVEX MT s.r.o.') ?>">
+    <meta property="og:url" content="<?= e($canonicalUrl) ?>">
     <meta property="og:image" content="<?= e($pageImage ?? SITE_URL . '/assets/images/orvex_logo_green.png') ?>">
+    <script type="application/ld+json"><?= json_encode([
+        '@context' => 'https://schema.org',
+        '@type' => 'Organization',
+        'name' => COMPANY_NAME,
+        'url' => SITE_URL,
+        'logo' => SITE_URL . '/assets/images/orvex_logo_green.png',
+        'telephone' => COMPANY_PHONE,
+        'email' => COMPANY_EMAIL,
+        'taxID' => COMPANY_DIC,
+        'vatID' => COMPANY_IC_DPH,
+        'address' => [
+            '@type' => 'PostalAddress',
+            'streetAddress' => COMPANY_ADDRESS,
+            'addressLocality' => COMPANY_CITY,
+            'postalCode' => COMPANY_ZIP,
+            'addressCountry' => 'SK',
+        ],
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) ?></script>
+<?php if (!empty($pageJsonLd)): ?>
+    <script type="application/ld+json"><?= json_encode($pageJsonLd, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) ?></script>
+<?php endif; ?>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="icon" type="image/png" href="/favicon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">

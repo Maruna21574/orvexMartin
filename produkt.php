@@ -14,11 +14,64 @@ if (!$product) {
 }
 
 $pageTitle = $product['name'];
-$pageDescription = mb_substr(strip_tags($product['description']), 0, 160);
+// Popis z MRP obsahuje interne poznamky (dodavatelia, cisla objednavok), preto do meta nejde.
+$pageDescription = mb_substr($product['name'] . ' - náhradný diel LKT (NDLKT), kód ' . $product['sku'] . '. Doprava po celom Slovensku, odborné poradenstvo. ORVEX Martin.', 0, 160);
 $pageProduct = true;
 if (!empty($product['image'])) {
     $pageImage = SITE_URL . '/' . $product['image'];
 }
+
+$productUrl = SITE_URL . '/produkt?id=' . urlencode($product['id']);
+$breadcrumbItems = [['Domov', SITE_URL . '/'], ['Produkty', SITE_URL . '/produkty']];
+if ($product['category']) {
+    $breadcrumbItems[] = [$product['category'], SITE_URL . '/produkty?kategoria=' . urlencode($product['category_id'])];
+}
+$breadcrumbItems[] = [$product['name'], $productUrl];
+
+$productSchema = [
+    '@context' => 'https://schema.org',
+    '@type' => 'Product',
+    'name' => $product['name'],
+    'description' => $pageDescription,
+    'sku' => $product['sku'],
+    'url' => $productUrl,
+    'brand' => ['@type' => 'Brand', 'name' => COMPANY_NAME],
+];
+if ($product['category']) {
+    $productSchema['category'] = $product['category'];
+}
+$schemaImages = array_values(array_filter(array_merge([$product['image'] ?? ''], $product['images'] ?? [])));
+if ($schemaImages) {
+    $productSchema['image'] = array_values(array_unique(array_map(
+        fn($img) => str_starts_with($img, 'http') ? $img : SITE_URL . '/' . ltrim($img, '/'),
+        $schemaImages
+    )));
+}
+// Cenu uvadzame len pri tovare so skladovou zasobou - inak sa na webe zobrazuje "Cena na vyziadanie".
+if ($product['stock'] > 0) {
+    $productSchema['offers'] = [
+        '@type' => 'Offer',
+        'url' => $productUrl,
+        'priceCurrency' => CURRENCY_CODE,
+        'price' => number_format((float) $product['price_vat'], 2, '.', ''),
+        'availability' => 'https://schema.org/InStock',
+        'itemCondition' => 'https://schema.org/NewCondition',
+        'seller' => ['@type' => 'Organization', 'name' => COMPANY_NAME],
+    ];
+}
+
+$pageJsonLd = [
+    $productSchema,
+    [
+        '@context' => 'https://schema.org',
+        '@type' => 'BreadcrumbList',
+        'itemListElement' => array_map(
+            fn($item, $i) => ['@type' => 'ListItem', 'position' => $i + 1, 'name' => $item[0], 'item' => $item[1]],
+            $breadcrumbItems,
+            array_keys($breadcrumbItems)
+        ),
+    ],
+];
 require_once 'includes/header.php';
 ?>
 

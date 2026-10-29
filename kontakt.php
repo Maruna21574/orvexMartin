@@ -1,6 +1,6 @@
 <?php
 $pageTitle = 'Kontakt';
-$pageDescription = 'ORVEX MT spol. s r.o. - Kontaktujte nás. Školská ulica 233/5, 038 04 Bystrička.';
+$pageDescription = 'ORVEX MT spol. s r.o. - predaj LKT a náhradné diely LKT. Kontaktujte nás. Školská ulica 233/5, 038 04 Bystrička.';
 require_once 'includes/header.php';
 ?>
 

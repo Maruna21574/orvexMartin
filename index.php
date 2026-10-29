@@ -1,6 +1,6 @@
 <?php
-$pageTitle = 'Domov';
-$pageDescription = 'ORVEX MT s.r.o. - Predaj lesnej kolesovej techniky, náhradných dielov, snehových reťazí, hydraulických čerpadiel a lanových úväzkov od roku 1991.';
+$pageTitle = 'Predaj LKT a náhradné diely LKT (NDLKT)';
+$pageDescription = 'Predaj LKT a náhradné diely LKT (NDLKT) od roku 1991. Lesné kolesové traktory, snehové reťaze, hydraulické čerpadlá a lanové úväzky. Doprava po celom Slovensku.';
 require_once 'includes/header.php';
 
 $categories = getCategories();
@@ -61,7 +61,7 @@ if ($featuredProducts === []) {
         <div class="hero__content">
             <span class="hero__badge hero-anim" style="--delay:0">Od roku 1991</span>
             <h1 class="hero-anim hero__title" style="--delay:1">Profesionálna lesná technika a&nbsp;príslušenstvo</h1>
-            <p class="hero-anim" style="--delay:2">Dodávame kolesovú lesnú techniku, náhradné diely, snehové reťaze, hydraulické čerpadlá a lanové úväzky pre profesionálov v&nbsp;lesnom hospodárstve.</p>
+            <p class="hero-anim" style="--delay:2">Predaj LKT a lesnej kolesovej techniky, náhradné diely LKT (NDLKT), snehové reťaze, hydraulické čerpadlá a lanové úväzky pre profesionálov v&nbsp;lesnom hospodárstve.</p>
             <div class="hero__actions hero-anim" style="--delay:3">
                 <a href="/produkty" class="btn btn--white btn--lg">Zobraziť produkty</a>
                 <a href="#kategorie" class="btn btn--outline btn--lg">Kategórie</a>
